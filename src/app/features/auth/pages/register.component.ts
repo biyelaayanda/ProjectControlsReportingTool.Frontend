@@ -34,7 +34,13 @@ import { UserRole, Department } from '../../../core/models/enums';
   template: `
     <div class="register-container">
       <div class="brand-header">
-        <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" />
+        <div class="logo-container">
+          <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <div class="logo-fallback" style="display: none;">
+            <mat-icon class="fallback-icon">water_drop</mat-icon>
+          </div>
+        </div>
         <h1 class="brand-title">Rand Water</h1>
         <p class="brand-subtitle">Project Controls Reporting System</p>
       </div>
@@ -376,8 +382,8 @@ export class RegisterComponent {
             panelClass: ['success-snackbar']
           });
           
-          // Redirect to dashboard after successful registration
-          this.router.navigate(['/dashboard']);
+          // Redirect to reports after successful registration
+          this.router.navigate(['/reports']);
         },
         error: (error) => {
           this.isLoading.set(false);

@@ -51,7 +51,13 @@ interface MenuItem {
           [opened]="!isHandset()"
         >
           <mat-toolbar class="sidenav-header">
-            <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="logo" />
+            <div class="nav-logo-container">
+              <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="logo" 
+                   onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+              <div class="nav-logo-fallback" style="display: none;">
+                <mat-icon class="nav-fallback-icon">water_drop</mat-icon>
+              </div>
+            </div>
             <div class="app-title-container">
               <span class="app-title">Rand Water</span>
               <span class="app-subtitle">Project Controls</span>
@@ -153,24 +159,68 @@ interface MenuItem {
     }
 
     .sidenav-header {
+      display: -webkit-box;
+      display: -ms-flexbox;
       display: flex;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
       align-items: center;
       padding: 16px;
+      background: #2E86AB; /* Fallback */
+      background: -webkit-linear-gradient(315deg, #2E86AB 0%, #A23B72 50%, #F18F01 100%);
+      background: -o-linear-gradient(315deg, #2E86AB 0%, #A23B72 50%, #F18F01 100%);
       background: linear-gradient(135deg, #2E86AB 0%, #A23B72 50%, #F18F01 100%);
       color: white;
       min-height: 80px;
     }
 
+    .nav-logo-container {
+      margin-right: 16px;
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      align-items: center;
+    }
+
     .logo {
       width: 48px;
       height: 48px;
-      margin-right: 16px;
       background: white;
       border-radius: 8px;
       padding: 4px;
+      -o-object-fit: contain;
+      object-fit: contain;
+    }
+
+    .nav-logo-fallback {
+      width: 48px;
+      height: 48px;
+      background: white;
+      border-radius: 8px;
+      padding: 4px;
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      align-items: center;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+    }
+
+    .nav-fallback-icon {
+      font-size: 32px !important;
+      color: #2E86AB;
+      width: 32px;
+      height: 32px;
     }
 
     .app-title-container {
+      display: -webkit-box;
+      display: -ms-flexbox;
       display: flex;
       flex-direction: column;
     }
@@ -357,8 +407,7 @@ export class NavigationComponent {
         {
           label: 'Department Management',
           icon: 'business',
-          route: '/admin/departments',
-          roles: [UserRole.Executive]
+          route: '/admin/departments'
         }
       ]
     }

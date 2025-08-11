@@ -31,7 +31,13 @@ import { LoginDto } from '../../../core/models/user.models';
   template: `
     <div class="login-container">
       <div class="brand-header">
-        <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" />
+        <div class="logo-container">
+          <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" 
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+          <div class="logo-fallback" style="display: none;">
+            <mat-icon class="fallback-icon">water_drop</mat-icon>
+          </div>
+        </div>
         <h1 class="brand-title">Rand Water</h1>
         <p class="brand-subtitle">Project Controls Reporting System</p>
       </div>
@@ -132,12 +138,24 @@ import { LoginDto } from '../../../core/models/user.models';
   `,
   styles: [`
     .login-container {
+      display: -webkit-box;
+      display: -ms-flexbox;
       display: flex;
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+      -ms-flex-direction: column;
       flex-direction: column;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
       justify-content: center;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
+      background: #2E86AB; /* Fallback for older browsers */
+      background: -webkit-linear-gradient(315deg, #2E86AB 0%, #1976d2 50%, #ffffff 100%);
+      background: -o-linear-gradient(315deg, #2E86AB 0%, #1976d2 50%, #ffffff 100%);
       background: linear-gradient(135deg, #2E86AB 0%, #1976d2 50%, #ffffff 100%);
       background-attachment: fixed;
     }
@@ -148,17 +166,60 @@ import { LoginDto } from '../../../core/models/user.models';
       color: white;
     }
 
+    .logo-container {
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
     .brand-logo {
       width: 80px;
       height: 80px;
       background: white;
       border-radius: 16px;
       padding: 8px;
-      margin-bottom: 16px;
+      -webkit-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       display: block;
       margin-left: auto;
       margin-right: auto;
+      -o-object-fit: contain;
+      object-fit: contain;
+      max-width: 100%;
+      height: auto;
+    }
+
+    .logo-fallback {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 16px;
+      padding: 8px;
+      -webkit-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      display: -webkit-box;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
+      align-items: center;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+    }
+
+    .fallback-icon {
+      font-size: 48px !important;
+      color: #2E86AB;
+      width: 48px;
+      height: 48px;
     }
 
     .brand-title {
@@ -179,9 +240,11 @@ import { LoginDto } from '../../../core/models/user.models';
       width: 100%;
       max-width: 400px;
       padding: 20px;
+      -webkit-box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
       box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.98);
+      background: -webkit-rgba(255, 255, 255, 0.98);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
@@ -191,8 +254,14 @@ import { LoginDto } from '../../../core/models/user.models';
     }
 
     mat-card-title {
+      display: -webkit-box;
+      display: -ms-flexbox;
       display: flex;
+      -webkit-box-align: center;
+      -ms-flex-align: center;
       align-items: center;
+      -webkit-box-pack: center;
+      -ms-flex-pack: center;
       justify-content: center;
       gap: 8px;
       font-size: 1.5rem;
@@ -272,8 +341,8 @@ export class LoginComponent {
             panelClass: ['success-snackbar']
           });
           
-          // Redirect to dashboard after successful login
-          this.router.navigate(['/dashboard']);
+          // Redirect to reports after successful login
+          this.router.navigate(['/reports']);
         },
         error: (error) => {
           this.isLoading.set(false);

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/pages/login.component';
 import { RegisterComponent } from './features/auth/pages/register.component';
-import { DashboardComponent } from './features/dashboard/pages/dashboard.component';
+import { ReportsListComponent } from './features/reports/pages/simple-reports-list.component';
 import { NavigationComponent } from './shared/components/navigation.component';
 import { authGuard } from './core/guards/auth.guard';
 
@@ -23,12 +23,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
-        path: 'dashboard',
-        component: DashboardComponent
+        path: 'reports',
+        component: ReportsListComponent
       },
       {
         path: '',
-        redirectTo: '/dashboard',
+        redirectTo: '/reports',
         pathMatch: 'full'
       }
     ]
@@ -37,6 +37,6 @@ export const routes: Routes = [
   // Fallback
   {
     path: '**',
-    redirectTo: '/dashboard'
+    redirectTo: '/reports'
   }
 ];
