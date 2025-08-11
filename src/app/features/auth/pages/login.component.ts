@@ -30,13 +30,19 @@ import { LoginDto } from '../../../core/models/user.models';
   ],
   template: `
     <div class="login-container">
+      <div class="brand-header">
+        <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" />
+        <h1 class="brand-title">Rand Water</h1>
+        <p class="brand-subtitle">Project Controls Reporting System</p>
+      </div>
+      
       <mat-card class="login-card">
         <mat-card-header>
           <mat-card-title>
-            <mat-icon>assignment</mat-icon>
-            Project Controls Reporting
+            <mat-icon>account_circle</mat-icon>
+            Welcome Back
           </mat-card-title>
-          <mat-card-subtitle>Sign in to your account</mat-card-subtitle>
+          <mat-card-subtitle>Sign in to access your dashboard</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content>
@@ -127,19 +133,56 @@ import { LoginDto } from '../../../core/models/user.models';
   styles: [`
     .login-container {
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #2E86AB 0%, #1976d2 50%, #ffffff 100%);
+      background-attachment: fixed;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 32px;
+      color: white;
+    }
+
+    .brand-logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 16px;
+      padding: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .brand-title {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand-subtitle {
+      font-size: 1.1rem;
+      font-weight: 300;
+      margin: 0;
+      opacity: 0.9;
     }
 
     .login-card {
       width: 100%;
       max-width: 400px;
       padding: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
       border-radius: 16px;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     mat-card-header {
@@ -176,7 +219,7 @@ import { LoginDto } from '../../../core/models/user.models';
     }
 
     .link {
-      color: #1976d2;
+      color: #2E86AB;
       text-decoration: none;
       font-weight: 500;
     }

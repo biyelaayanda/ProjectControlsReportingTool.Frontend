@@ -33,13 +33,19 @@ import { UserRole, Department } from '../../../core/models/enums';
   ],
   template: `
     <div class="register-container">
+      <div class="brand-header">
+        <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" />
+        <h1 class="brand-title">Rand Water</h1>
+        <p class="brand-subtitle">Project Controls Reporting System</p>
+      </div>
+      
       <mat-card class="register-card">
         <mat-card-header>
           <mat-card-title>
             <mat-icon>person_add</mat-icon>
             Create Account
           </mat-card-title>
-          <mat-card-subtitle>Join Project Controls Reporting</mat-card-subtitle>
+          <mat-card-subtitle>Join our Project Controls team</mat-card-subtitle>
         </mat-card-header>
 
         <mat-card-content>
@@ -204,19 +210,52 @@ import { UserRole, Department } from '../../../core/models/enums';
   styles: [`
     .register-container {
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #2E86AB 0%, #1976d2 50%, #ffffff 100%);
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 32px;
+      color: white;
+    }
+
+    .brand-logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 16px;
+      padding: 8px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-title {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin: 0 0 8px 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .brand-subtitle {
+      font-size: 1.1rem;
+      font-weight: 300;
+      margin: 0;
+      opacity: 0.9;
     }
 
     .register-card {
       width: 100%;
       max-width: 500px;
       padding: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
       border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
     }
 
     mat-card-header {
@@ -263,7 +302,7 @@ import { UserRole, Department } from '../../../core/models/enums';
     }
 
     .link {
-      color: #1976d2;
+      color: #2E86AB;
       text-decoration: none;
       font-weight: 500;
     }

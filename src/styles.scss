@@ -1,4 +1,9 @@
 
+// Custom Rand Water color palette
+$randwater-primary: #2E86AB;
+$randwater-secondary: #1976d2;
+$randwater-accent: #00897b;
+
 // Include theming for Angular Material with `mat.theme()`.
 // This Sass mixin will define CSS variables that are used for styling Angular Material
 // components according to the Material 3 design spec.
@@ -9,8 +14,8 @@
 html {
   @include mat.theme((
     color: (
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
+      primary: mat.$blue-palette,
+      tertiary: mat.$cyan-palette,
     ),
     typography: Roboto,
     density: 0,
@@ -36,4 +41,30 @@ body {
 /* You can add global styles to this file, and also import other style files */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 50%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+// Custom CSS variables for Rand Water theme
+:root {
+  --randwater-primary: #2E86AB;
+  --randwater-secondary: #1976d2;
+  --randwater-accent: #00897b;
+  --randwater-light-blue: #e3f2fd;
+  --randwater-background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 50%, #ffffff 100%);
+}
+
+// Success snackbar styling
+.success-snackbar {
+  background-color: var(--randwater-accent) !important;
+  color: white !important;
+}
+
+// Error snackbar styling
+.error-snackbar {
+  background-color: #f44336 !important;
+  color: white !important;
+}

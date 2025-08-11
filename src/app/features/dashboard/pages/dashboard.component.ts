@@ -49,10 +49,16 @@ interface RecentActivity {
     <div class="dashboard-container">
       <!-- Welcome Header -->
       <div class="welcome-section">
-        <h1>Welcome back, {{ currentUser()?.firstName }}!</h1>
-        <p class="welcome-subtitle">
-          {{ getRoleDisplayName(currentUser()?.role) }} • {{ getDepartmentDisplayName(currentUser()?.department) }}
-        </p>
+        <div class="welcome-header">
+          <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="dashboard-logo" />
+          <div class="welcome-text">
+            <h1>Welcome back, {{ currentUser()?.firstName }}!</h1>
+            <p class="welcome-subtitle">
+              {{ getRoleDisplayName(currentUser()?.role) }} • {{ getDepartmentDisplayName(currentUser()?.department) }}
+            </p>
+            <p class="company-subtitle">Rand Water - Project Controls Reporting System</p>
+          </div>
+        </div>
       </div>
 
       <!-- Dashboard Cards Grid -->
@@ -203,19 +209,50 @@ interface RecentActivity {
 
     .welcome-section {
       margin-bottom: 32px;
+      background: linear-gradient(135deg, #2E86AB 0%, #1976d2 100%);
+      color: white;
+      padding: 32px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(46, 134, 171, 0.3);
+    }
+
+    .welcome-header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .dashboard-logo {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 16px;
+      padding: 8px;
+      flex-shrink: 0;
+    }
+
+    .welcome-text {
+      flex: 1;
     }
 
     .welcome-section h1 {
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 400;
       margin: 0 0 8px 0;
-      color: #333;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .welcome-subtitle {
-      font-size: 1rem;
-      color: #666;
+      font-size: 1.1rem;
+      margin: 0 0 8px 0;
+      opacity: 0.9;
+    }
+
+    .company-subtitle {
+      font-size: 0.95rem;
       margin: 0;
+      opacity: 0.8;
+      font-weight: 300;
     }
 
     .cards-grid {
@@ -277,10 +314,10 @@ interface RecentActivity {
       font-size: 0.875rem;
     }
 
-    .card-primary .card-icon { color: #1976d2; }
-    .card-accent .card-icon { color: #ff4081; }
+    .card-primary .card-icon { color: #2E86AB; }
+    .card-accent .card-icon { color: #1976d2; }
     .card-warn .card-icon { color: #f44336; }
-    .card-success .card-icon { color: #4caf50; }
+    .card-success .card-icon { color: #00897b; }
 
     .content-grid {
       display: grid;
@@ -434,11 +471,15 @@ interface RecentActivity {
     }
 
     @media (max-width: 768px) {
-      .content-grid {
-        grid-template-columns: 1fr;
+      .main-content {
+        padding: 16px;
       }
       
       .cards-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .content-grid {
         grid-template-columns: 1fr;
       }
       
@@ -448,6 +489,20 @@ interface RecentActivity {
       
       .summary-stats {
         grid-template-columns: 1fr;
+      }
+
+      .welcome-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 16px;
+      }
+
+      .welcome-section {
+        padding: 24px 20px;
+      }
+
+      .welcome-section h1 {
+        font-size: 1.8rem;
       }
     }
   `]

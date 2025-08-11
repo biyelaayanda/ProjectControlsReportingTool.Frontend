@@ -51,8 +51,11 @@ interface MenuItem {
           [opened]="!isHandset()"
         >
           <mat-toolbar class="sidenav-header">
-            <img src="assets/logo.svg" alt="Logo" class="logo" />
-            <span class="app-title">Project Controls</span>
+            <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="logo" />
+            <div class="app-title-container">
+              <span class="app-title">Rand Water</span>
+              <span class="app-subtitle">Project Controls</span>
+            </div>
           </mat-toolbar>
           
           <mat-nav-list>
@@ -153,25 +156,43 @@ interface MenuItem {
       display: flex;
       align-items: center;
       padding: 16px;
-      background-color: #1976d2;
+      background: linear-gradient(135deg, #2E86AB 0%, #A23B72 50%, #F18F01 100%);
       color: white;
+      min-height: 80px;
     }
 
     .logo {
-      width: 32px;
-      height: 32px;
-      margin-right: 12px;
+      width: 48px;
+      height: 48px;
+      margin-right: 16px;
+      background: white;
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .app-title-container {
+      display: flex;
+      flex-direction: column;
     }
 
     .app-title {
-      font-size: 1.1rem;
-      font-weight: 500;
+      font-size: 1.3rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .app-subtitle {
+      font-size: 0.9rem;
+      font-weight: 300;
+      opacity: 0.9;
+      line-height: 1.2;
     }
 
     .main-toolbar {
       position: sticky;
       top: 0;
       z-index: 1000;
+      background: linear-gradient(90deg, #2E86AB 0%, #1976d2 100%);
     }
 
     .toolbar-spacer {
@@ -181,7 +202,7 @@ interface MenuItem {
     .main-content {
       padding: 20px;
       min-height: calc(100vh - 64px);
-      background-color: #f5f5f5;
+      background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 50%, #ffffff 100%);
     }
 
     .user-info {
@@ -219,12 +240,13 @@ interface MenuItem {
     }
 
     mat-list-item.active {
-      background-color: rgba(25, 118, 210, 0.1);
-      color: #1976d2;
+      background-color: rgba(46, 134, 171, 0.1);
+      color: #2E86AB;
+      border-left: 4px solid #2E86AB;
     }
 
     mat-list-item.active mat-icon {
-      color: #1976d2;
+      color: #2E86AB;
     }
 
     mat-list-item:hover {
