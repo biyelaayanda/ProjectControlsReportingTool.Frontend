@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/login/login.component';
-import { RegisterComponent } from './features/auth/register/register.component';
+import { LoginComponent } from './features/auth/pages/login.component';
+import { RegisterComponent } from './features/auth/pages/register.component';
 import { ReportsListComponent } from './features/reports/pages/simple-reports-list.component';
 import { ReportDetailsComponent } from './features/reports/components/report-details.component';
 import { ProfileComponent } from './features/profile/profile.component';
