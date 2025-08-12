@@ -36,13 +36,13 @@ import { UserRole, Department } from '../../../core/models/enums';
       <div class="brand-header">
         <div class="logo-container">
           <img src="assets/randwater-logo.png" alt="Rand Water Logo" class="brand-logo" 
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-          <div class="logo-fallback" style="display: none;">
+               (error)="onImageError($event)" (load)="onImageLoad()" *ngIf="!showFallback">
+          <div class="logo-fallback" *ngIf="showFallback">
             <mat-icon class="fallback-icon">water_drop</mat-icon>
           </div>
         </div>
         <h1 class="brand-title">Rand Water</h1>
-        <p class="brand-subtitle">Project Controls Reporting System</p>
+        <p class="brand-subtitle">Project Controls Reporting Tool</p>
       </div>
       
       <mat-card class="register-card">
@@ -345,6 +345,7 @@ export class RegisterComponent {
   registerForm: FormGroup;
   isLoading = signal(false);
   hidePassword = signal(true);
+  showFallback = false;
   
   // Expose enums to template
   UserRole = UserRole;
@@ -366,6 +367,14 @@ export class RegisterComponent {
       phoneNumber: [''],
       jobTitle: ['']
     });
+  }
+
+  onImageError(event: any): void {
+    this.showFallback = true;
+  }
+
+  onImageLoad(): void {
+    this.showFallback = false;
   }
 
   onSubmit(): void {

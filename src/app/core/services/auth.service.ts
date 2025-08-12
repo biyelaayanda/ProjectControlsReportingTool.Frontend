@@ -54,11 +54,23 @@ export class AuthService {
    * Login user with email and password
    */
   login(credentials: LoginRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials)
+    return this.http.post<any>(`${this.API_URL}/login`, credentials)
       .pipe(
-        tap(response => {
-          if (response.success && response.user && response.token) {
+        map(response => {
+          // Backend returns { token, user, expiresAt } on success or { errorMessage } on error
+          if (response.token && response.user) {
             this.setAuthData(response.user, response.token);
+            return {
+              success: true,
+              user: response.user,
+              token: response.token,
+              expiresAt: response.expiresAt
+            };
+          } else {
+            return {
+              success: false,
+              errorMessage: response.errorMessage || 'Login failed'
+            };
           }
         }),
         catchError(this.handleError)
