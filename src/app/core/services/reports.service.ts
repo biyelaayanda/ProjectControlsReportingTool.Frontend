@@ -5,12 +5,12 @@ import { environment } from '../../../environments/environment';
 import { Department, ReportStatus } from '../models/enums';
 
 export interface Report {
-  id: number;
+  id: string;  // Changed from number to string to match backend GUID
   title: string;
   type: string;
   status: ReportStatus;
   department: Department;
-  createdBy: string;
+  creatorName: string;  // Changed from createdBy to match backend CreatorName
   createdDate: Date;
   dueDate?: Date;
   lastModified: Date;
@@ -112,7 +112,7 @@ export class ReportsService {
   /**
    * Get a specific report by ID
    */
-  getReport(id: number): Observable<Report> {
+  getReport(id: string): Observable<Report> {
     return this.http.get<Report>(`${this.apiUrl}/${id}`);
   }
 
@@ -126,35 +126,35 @@ export class ReportsService {
   /**
    * Update an existing report
    */
-  updateReport(id: number, reportDto: UpdateReportDto): Observable<Report> {
+  updateReport(id: string, reportDto: UpdateReportDto): Observable<Report> {
     return this.http.put<Report>(`${this.apiUrl}/${id}`, reportDto);
   }
 
   /**
    * Delete a report
    */
-  deleteReport(id: number): Observable<void> {
+  deleteReport(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   /**
    * Submit a report for review
    */
-  submitReport(id: number): Observable<Report> {
+  submitReport(id: string): Observable<Report> {
     return this.http.post<Report>(`${this.apiUrl}/${id}/submit`, {});
   }
 
   /**
    * Approve a report (for managers/executives)
    */
-  approveReport(id: number, comments?: string): Observable<Report> {
+  approveReport(id: string, comments?: string): Observable<Report> {
     return this.http.post<Report>(`${this.apiUrl}/${id}/approve`, { comments });
   }
 
   /**
    * Reject a report (for managers/executives)
    */
-  rejectReport(id: number, reason: string): Observable<Report> {
+  rejectReport(id: string, reason: string): Observable<Report> {
     return this.http.post<Report>(`${this.apiUrl}/${id}/reject`, { reason });
   }
 
@@ -218,7 +218,7 @@ export class ReportsService {
   /**
    * Export report to various formats
    */
-  exportReport(id: number, format: 'pdf' | 'excel' | 'word' = 'pdf'): Observable<Blob> {
+  exportReport(id: string, format: 'pdf' | 'excel' | 'word' = 'pdf'): Observable<Blob> {
     return this.http.get(`${this.apiUrl}/${id}/export`, {
       params: { format },
       responseType: 'blob'
@@ -275,7 +275,7 @@ export class ReportsService {
   /**
    * Remove a report from the local cache
    */
-  removeReportFromCache(reportId: number): void {
+  removeReportFromCache(reportId: string): void {
     const currentReports = this.reportsSubject.value;
     const filteredReports = currentReports.filter(r => r.id !== reportId);
     this.reportsSubject.next(filteredReports);

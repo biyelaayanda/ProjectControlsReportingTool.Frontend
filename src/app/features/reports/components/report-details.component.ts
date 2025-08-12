@@ -70,9 +70,9 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     <mat-icon>{{ getStatusIcon(report()?.status!) }}</mat-icon>
                     {{ getStatusDisplay(report()?.status!) }}
                   </mat-chip>
-                  <mat-chip [class]="getPriorityClass(report()?.priority!)">
-                    <mat-icon>{{ getPriorityIcon(report()?.priority!) }}</mat-icon>
-                    {{ report()?.priority }} Priority
+                  <mat-chip [class]="getPriorityClass(report()?.priority)">
+                    <mat-icon>{{ getPriorityIcon(report()?.priority) }}</mat-icon>
+                    {{ report()?.priority || 'Medium' }} Priority
                   </mat-chip>
                 </div>
               </div>
@@ -216,7 +216,7 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     </div>
                     <div class="detail-row">
                       <span class="label">Created By:</span>
-                      <span class="value">{{ report()?.createdBy }}</span>
+                      <span class="value">{{ report()?.creatorName }}</span>
                     </div>
                     <div class="detail-row">
                       <span class="label">Created Date:</span>
@@ -262,7 +262,7 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     [userRole]="getCurrentUserRole()"
                     [userDepartment]="currentUser()!.department"
                     [reportDepartment]="report()!.department"
-                    [createdBy]="report()!.createdBy"
+                    [createdBy]="report()!.creatorName"
                     [currentUserEmail]="currentUser()!.email">
                   </app-workflow-tracker>
                 } @else {
@@ -566,11 +566,11 @@ export class ReportDetailsComponent implements OnInit {
   ngOnInit() {
     const reportId = this.route.snapshot.paramMap.get('id');
     if (reportId) {
-      this.loadReport(+reportId);
+      this.loadReport(reportId);
     }
   }
 
-  loadReport(id: number) {
+  loadReport(id: string) {
     this.isLoading.set(true);
     this.reportsService.getReport(id).subscribe({
       next: (report) => {
@@ -606,7 +606,8 @@ export class ReportDetailsComponent implements OnInit {
     
     // Can edit if it's your own report and it's in Draft status
     if (user.role === UserRole.GeneralStaff) {
-      return report.createdBy === user.email && report.status === ReportStatus.Draft;
+      const userFullName = `${user.firstName} ${user.lastName}`;
+      return report.creatorName === userFullName && report.status === ReportStatus.Draft;
     }
     
     // Line managers can edit reports from their department
@@ -625,8 +626,9 @@ export class ReportDetailsComponent implements OnInit {
     
     if (!user || !report) return false;
     
+    const userFullName = `${user.firstName} ${user.lastName}`;
     return user.role === UserRole.GeneralStaff && 
-           report.createdBy === user.email && 
+           report.creatorName === userFullName && 
            report.status === ReportStatus.Draft;
   }
 
@@ -916,11 +918,13 @@ export class ReportDetailsComponent implements OnInit {
     }
   }
 
-  getPriorityClass(priority: string): string {
+  getPriorityClass(priority: string | undefined): string {
+    if (!priority) return 'priority-medium'; // Default fallback
     return `priority-${priority.toLowerCase()}`;
   }
 
-  getPriorityIcon(priority: string): string {
+  getPriorityIcon(priority: string | undefined): string {
+    if (!priority) return 'help'; // Default fallback
     switch (priority) {
       case 'Low': return 'keyboard_arrow_down';
       case 'Medium': return 'remove';

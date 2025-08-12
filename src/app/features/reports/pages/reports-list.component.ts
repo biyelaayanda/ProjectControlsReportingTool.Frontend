@@ -21,12 +21,12 @@ import { ReportsService } from '../../../core/services/reports.service';
 import { UserRole, Department, ReportStatus } from '../../../core/models/enums';
 
 interface Report {
-  id: number;
+  id: string;  // Changed from number to string to match service interface
   title: string;
   type: string;
   status: ReportStatus;
   department: Department;
-  createdBy: string;
+  creatorName: string;  // Changed from createdBy to match backend
   createdDate: Date;
   dueDate?: Date;
   lastModified: Date;
@@ -210,7 +210,7 @@ interface Report {
                   <!-- Created By Column -->
                   <ng-container matColumnDef="createdBy">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header>Created By</th>
-                    <td mat-cell *matCellDef="let report">{{ report.createdBy }}</td>
+                    <td mat-cell *matCellDef="let report">{{ report.creatorName }}</td>
                   </ng-container>
 
                   <!-- Due Date Column -->
@@ -354,7 +354,7 @@ interface Report {
                         </mat-chip>
                       </div>
                       <div class="card-footer">
-                        <span class="created-by">{{ report.createdBy }}</span>
+                        <span class="created-by">{{ report.creatorName }}</span>
                         @if (report.dueDate) {
                           <span [ngClass]="getDueDateClass(report.dueDate)">
                             Due: {{ report.dueDate | date:'MMM dd' }}
@@ -698,27 +698,27 @@ export class ReportsListComponent implements OnInit {
     this.viewMode.set(mode);
   }
 
-  viewReport(id: number): void {
+  viewReport(id: string): void {
     console.log('View report:', id);
     // Navigate to report detail view
   }
 
-  editReport(id: number): void {
+  editReport(id: string): void {
     console.log('Edit report:', id);
     // Navigate to report edit page
   }
 
-  deleteReport(id: number): void {
+  deleteReport(id: string): void {
     console.log('Delete report:', id);
     // Show confirmation dialog and delete
   }
 
-  exportReport(id: number): void {
+  exportReport(id: string): void {
     console.log('Export report:', id);
     // Export report functionality
   }
 
-  submitReport(id: number): void {
+  submitReport(id: string): void {
     this.reportsService.submitReport(id).subscribe({
       next: (updatedReport) => {
         console.log('Report submitted successfully:', updatedReport);
@@ -732,7 +732,7 @@ export class ReportsListComponent implements OnInit {
     });
   }
 
-  approveReport(id: number): void {
+  approveReport(id: string): void {
     // Could open a dialog for comments, for now just approve
     this.reportsService.approveReport(id).subscribe({
       next: (updatedReport) => {
@@ -747,7 +747,7 @@ export class ReportsListComponent implements OnInit {
     });
   }
 
-  rejectReport(id: number): void {
+  rejectReport(id: string): void {
     // Could open a dialog for rejection reason, for now just reject with default reason
     this.reportsService.rejectReport(id, 'Report rejected by reviewer').subscribe({
       next: (updatedReport) => {
@@ -767,7 +767,7 @@ export class ReportsListComponent implements OnInit {
     if (!user) return false;
 
     // Users can edit their own reports if in draft or rejected status
-    if (report.createdBy === `${user.firstName} ${user.lastName}`) {
+    if (report.creatorName === `${user.firstName} ${user.lastName}`) {
       return report.status === ReportStatus.Draft || report.status === ReportStatus.Rejected;
     }
 
@@ -782,7 +782,7 @@ export class ReportsListComponent implements OnInit {
     // Only executives or report creators (if draft) can delete
     if (user.role === UserRole.Executive) return true;
     
-    return report.createdBy === `${user.firstName} ${user.lastName}` && 
+    return report.creatorName === `${user.firstName} ${user.lastName}` && 
            report.status === ReportStatus.Draft;
   }
 
@@ -792,7 +792,7 @@ export class ReportsListComponent implements OnInit {
 
     // Only staff can submit their own draft reports
     return user.role === UserRole.GeneralStaff && 
-           report.createdBy === `${user.firstName} ${user.lastName}` && 
+           report.creatorName === `${user.firstName} ${user.lastName}` && 
            report.status === ReportStatus.Draft;
   }
 

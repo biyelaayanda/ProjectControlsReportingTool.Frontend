@@ -205,12 +205,12 @@ import { CreateReportComponent } from '../components/create-report.component';
                         <mat-chip [ngClass]="'status-' + getStatusDisplay(report.status).toLowerCase().replace(' ', '')">
                           {{ getStatusDisplay(report.status) }}
                         </mat-chip>
-                        <mat-chip [ngClass]="'priority-' + report.priority.toLowerCase()">
-                          {{ report.priority }}
+                        <mat-chip [ngClass]="getPriorityClass(report.priority)">
+                          {{ getPriorityDisplay(report.priority) }}
                         </mat-chip>
                       </div>
                       <div class="card-footer">
-                        <span class="created-by">{{ report.createdBy }}</span>
+                        <span class="created-by">{{ report.creatorName }}</span>
                         @if (report.dueDate) {
                           <span [ngClass]="getDueDateClass(report.dueDate)">
                             Due: {{ report.dueDate | date:'MMM dd' }}
@@ -561,12 +561,17 @@ export class ReportsListComponent implements OnInit {
   // Signals
   isLoading = signal(false);
   reports = signal<Report[]>([]);
+  currentUserSignal = signal<any>(null);
   
   // Form
   filtersForm: FormGroup;
 
   // Computed
-  currentUser = computed(() => this.authService.currentUser());
+  currentUser = computed(() => {
+    const user = this.currentUserSignal();
+    console.log('Debug - currentUser computed:', user);
+    return user;
+  });
 
   // Role-based computed properties
   isGeneralStaff = computed(() => this.currentUser()?.role === UserRole.GeneralStaff);
@@ -575,37 +580,34 @@ export class ReportsListComponent implements OnInit {
 
   filteredReports = computed(() => {
     const allReports = this.reports();
-    const filters = this.filtersForm?.value;
     const user = this.currentUser();
     
-    if (!filters || !user) return allReports;
-
-    let filteredReports = allReports;
-
-    // Role-based filtering
-    if (this.isGeneralStaff()) {
-      // General staff can only see their own reports
-      filteredReports = allReports.filter(report => 
-        report.createdBy === `${user.firstName} ${user.lastName}`
-      );
+    console.log('Debug - All reports:', allReports);
+    console.log('Debug - Current user:', user);
+    
+    if (!user) {
+      console.log('Debug - No user found');
+      return [];
     }
-    // Line managers and executives see team/all reports based on API calls
 
-    // Apply user filters
-    return filteredReports.filter(report => {
-      const matchesSearch = !filters.search || 
-        report.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        report.description?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        report.createdBy.toLowerCase().includes(filters.search.toLowerCase());
+    // For General Staff: Only show reports they created
+    if (this.isGeneralStaff()) {
+      const userFullName = `${user.firstName} ${user.lastName}`;
+      console.log('Debug - User is general staff, filtering by creator:', userFullName);
       
-      const matchesStatus = !filters.status || this.getStatusDisplay(report.status) === filters.status;
-      const matchesDepartment = !filters.department || this.getDepartmentDisplay(report.department) === filters.department;
+      const userReports = allReports.filter(report => {
+        const match = report.creatorName === userFullName;
+        console.log(`Debug - Report "${report.title}" created by "${report.creatorName}", matches user "${userFullName}": ${match}`);
+        return match;
+      });
       
-      const matchesDateFrom = !filters.dateFrom || new Date(report.createdDate) >= new Date(filters.dateFrom);
-      const matchesDateTo = !filters.dateTo || new Date(report.createdDate) <= new Date(filters.dateTo);
+      console.log('Debug - Filtered user reports:', userReports);
+      return userReports;
+    }
 
-      return matchesSearch && matchesStatus && matchesDepartment && matchesDateFrom && matchesDateTo;
-    });
+    // Line managers and executives see all reports for now
+    console.log('Debug - User is manager/executive, showing all reports');
+    return allReports;
   });
 
   hasFilters = computed(() => {
@@ -624,6 +626,12 @@ export class ReportsListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // Subscribe to current user changes
+    this.authService.currentUser$.subscribe(user => {
+      console.log('Debug - Auth service user update:', user);
+      this.currentUserSignal.set(user);
+    });
+
     this.loadReports();
     
     // Handle query parameters from dashboard navigation
@@ -646,25 +654,38 @@ export class ReportsListComponent implements OnInit {
 
   private async loadReports(): Promise<void> {
     this.isLoading.set(true);
+    console.log('Debug - Starting to load reports...');
+    
     try {
       const user = this.currentUser();
       if (!user) {
-        console.error('No user found');
+        console.error('Debug - No user found');
         return;
       }
+
+      console.log('Debug - User found:', user);
+      console.log('Debug - Calling reportsService.getReports()...');
 
       // Call actual API to get reports
       this.reportsService.getReports().subscribe({
         next: (response) => {
+          console.log('Debug - API response received:', response);
           this.reports.set(response.reports || []);
+          console.log('Debug - Reports set to:', this.reports());
         },
         error: (error) => {
-          console.error('Error loading reports:', error);
+          console.error('Debug - Error loading reports:', error);
+          console.error('Debug - Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            message: error.message,
+            url: error.url
+          });
           this.reports.set([]);
         }
       });
     } catch (error) {
-      console.error('Error loading reports:', error);
+      console.error('Debug - Catch error loading reports:', error);
     } finally {
       this.isLoading.set(false);
     }
@@ -716,16 +737,16 @@ export class ReportsListComponent implements OnInit {
     });
   }
 
-  viewReport(id: number): void {
+  viewReport(id: string): void {
     this.router.navigate(['/reports', id]);
   }
 
-  editReport(id: number): void {
+  editReport(id: string): void {
     console.log('Edit report:', id);
     alert(`Edit Report ${id} - functionality would be implemented here`);
   }
 
-  deleteReport(id: number): void {
+  deleteReport(id: string): void {
     console.log('Delete report:', id);
     if (confirm('Are you sure you want to delete this report?')) {
       // Remove from local state
@@ -740,7 +761,7 @@ export class ReportsListComponent implements OnInit {
     if (!user) return false;
 
     // Users can edit their own reports if in draft or rejected status
-    if (report.createdBy === `${user.firstName} ${user.lastName}`) {
+    if (report.creatorName === `${user.firstName} ${user.lastName}`) {
       return report.status === ReportStatus.Draft || report.status === ReportStatus.Rejected;
     }
 
@@ -766,7 +787,7 @@ export class ReportsListComponent implements OnInit {
     if (!user) return false;
 
     // Users can delete their own draft reports
-    if (report.createdBy === `${user.firstName} ${user.lastName}`) {
+    if (report.creatorName === `${user.firstName} ${user.lastName}`) {
       return report.status === ReportStatus.Draft;
     }
 
@@ -822,5 +843,14 @@ export class ReportsListComponent implements OnInit {
     if (daysDiff < 0) return 'due-date-overdue';
     if (daysDiff <= 3) return 'due-date-soon';
     return 'due-date-normal';
+  }
+
+  getPriorityClass(priority: string | undefined): string {
+    if (!priority) return 'priority-medium';
+    return 'priority-' + priority.toLowerCase();
+  }
+
+  getPriorityDisplay(priority: string | undefined): string {
+    return priority || 'Medium';
   }
 }
