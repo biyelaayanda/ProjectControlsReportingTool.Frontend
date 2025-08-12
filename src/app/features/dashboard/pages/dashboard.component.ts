@@ -162,15 +162,25 @@ interface RecentActivity {
         </mat-card>
       </div>
 
-      <!-- Department Summary (for Line Managers and Executives) -->
-      @if (showDepartmentSummary()) {
-        <mat-card class="department-summary-card">
-          <mat-card-header>
-            <mat-card-title>
-              <mat-icon>business</mat-icon>
+      <!-- Department Summary (always visible but collapsible) -->
+      <mat-card class="department-summary-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>business</mat-icon>
+            @if (currentUser()?.role === UserRole.GeneralStaff) {
+              My Department Overview
+            } @else if (currentUser()?.role === UserRole.LineManager) {
               Department Summary
-            </mat-card-title>
-          </mat-card-header>
+            } @else {
+              Organization Overview
+            }
+          </mat-card-title>
+          <button mat-icon-button (click)="toggleDepartmentSummary()" 
+                  [attr.aria-label]="departmentSummaryExpanded() ? 'Collapse' : 'Expand'">
+            <mat-icon>{{ departmentSummaryExpanded() ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </mat-card-header>
+        @if (departmentSummaryExpanded()) {
           <mat-card-content>
             <div class="summary-stats">
               <div class="stat-item">
@@ -188,16 +198,16 @@ interface RecentActivity {
                 </div>
               </div>
               <div class="stat-item">
-                <h3>Team Members</h3>
+                <h3>{{ currentUser()?.role === UserRole.GeneralStaff ? 'My Tasks' : 'Team Members' }}</h3>
                 <div class="stat-bar">
                   <mat-progress-bar mode="determinate" [value]="100" color="accent"></mat-progress-bar>
-                  <span>12</span>
+                  <span>{{ currentUser()?.role === UserRole.GeneralStaff ? '8' : '12' }}</span>
                 </div>
               </div>
             </div>
           </mat-card-content>
-        </mat-card>
-      }
+        }
+      </mat-card>
     </div>
   `,
   styles: [`
@@ -471,24 +481,28 @@ interface RecentActivity {
     }
 
     @media (max-width: 768px) {
-      .main-content {
-        padding: 16px;
+      .dashboard-container {
+        padding: 12px;
       }
       
       .cards-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
       }
       
       .content-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
       }
       
       .actions-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
       }
       
       .summary-stats {
         grid-template-columns: 1fr;
+        gap: 16px;
       }
 
       .welcome-header {
@@ -498,11 +512,59 @@ interface RecentActivity {
       }
 
       .welcome-section {
-        padding: 24px 20px;
+        padding: 20px 16px;
       }
 
       .welcome-section h1 {
         font-size: 1.8rem;
+      }
+      
+      .dashboard-logo {
+        max-width: 60px;
+        height: auto;
+      }
+      
+      .card-value {
+        font-size: 1.5rem;
+      }
+      
+      .action-button {
+        min-height: 60px;
+        font-size: 0.8rem;
+      }
+    }
+    
+    @media (max-width: 599px) {
+      .dashboard-container {
+        padding: 8px;
+      }
+      
+      .welcome-section {
+        padding: 16px 12px;
+      }
+      
+      .welcome-section h1 {
+        font-size: 1.5rem;
+      }
+      
+      .welcome-subtitle {
+        font-size: 0.9rem;
+      }
+      
+      .company-subtitle {
+        font-size: 0.85rem;
+      }
+      
+      .cards-grid {
+        gap: 12px;
+      }
+      
+      .dashboard-card {
+        height: 120px;
+      }
+      
+      .content-grid {
+        gap: 12px;
       }
     }
   `]
@@ -511,7 +573,22 @@ export class DashboardComponent implements OnInit {
   private breakpointObserver = inject(BreakpointObserver);
   private authService = inject(AuthService);
 
+  // Expose UserRole enum for template
+  UserRole = UserRole;
+
   currentUser = computed(() => this.authService.currentUser());
+  
+  // Department summary expansion state
+  private departmentSummaryToggled = signal<boolean | null>(null);
+  
+  departmentSummaryExpanded = computed(() => {
+    const toggled = this.departmentSummaryToggled();
+    if (toggled !== null) {
+      return toggled;
+    }
+    // Default: expanded on desktop, collapsed on mobile/tablet
+    return !this.breakpointObserver.isMatched([Breakpoints.Handset, Breakpoints.Small, '(max-width: 768px)']);
+  });
   
   // Sample data - would be replaced with real API calls
   private sampleActivities: RecentActivity[] = [
@@ -701,5 +778,9 @@ export class DashboardComponent implements OnInit {
     } else {
       return `${days} days ago`;
     }
+  }
+
+  toggleDepartmentSummary(): void {
+    this.departmentSummaryToggled.set(!this.departmentSummaryExpanded());
   }
 }

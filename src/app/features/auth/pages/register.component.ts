@@ -396,8 +396,31 @@ export class RegisterComponent {
         },
         error: (error) => {
           this.isLoading.set(false);
-          this.snackBar.open(error.message || 'Registration failed. Please try again.', 'Close', {
-            duration: 5000,
+          console.error('Registration error:', error);
+          
+          let errorMessage = 'Registration failed. Please try again.';
+          
+          // Handle specific error messages from the backend
+          if (error.error?.message) {
+            switch (error.error.message) {
+              case 'Email already exists':
+                errorMessage = 'This email is already registered. Please use a different email or try logging in.';
+                break;
+              case 'Invalid email format':
+                errorMessage = 'Please enter a valid email address.';
+                break;
+              case 'Password does not meet requirements':
+                errorMessage = 'Password must be at least 8 characters with uppercase, lowercase, number and special character.';
+                break;
+              default:
+                errorMessage = error.error.message;
+            }
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 8000,
             panelClass: ['error-snackbar']
           });
         }

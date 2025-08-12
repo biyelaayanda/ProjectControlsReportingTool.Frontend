@@ -355,8 +355,34 @@ export class LoginComponent {
         },
         error: (error) => {
           this.isLoading.set(false);
-          this.snackBar.open(error.message || 'Login failed. Please try again.', 'Close', {
-            duration: 5000,
+          console.error('Login error:', error);
+          
+          let errorMessage = 'Login failed. Please try again.';
+          
+          // Handle specific error messages from the backend
+          if (error.status === 401) {
+            errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+          } else if (error.error?.message) {
+            switch (error.error.message) {
+              case 'Invalid credentials':
+              case 'User not found':
+                errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+                break;
+              case 'Account is locked':
+                errorMessage = 'Your account has been locked. Please contact an administrator.';
+                break;
+              case 'Account is not active':
+                errorMessage = 'Your account is not active. Please contact an administrator.';
+                break;
+              default:
+                errorMessage = error.error.message;
+            }
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
+          this.snackBar.open(errorMessage, 'Close', {
+            duration: 6000,
             panelClass: ['error-snackbar']
           });
         }

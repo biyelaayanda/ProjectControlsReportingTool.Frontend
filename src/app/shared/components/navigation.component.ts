@@ -1,11 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ViewChild } from '@angular/core';
 import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -46,9 +46,9 @@ interface MenuItem {
           #drawer
           class="sidenav"
           fixedInViewport
-          [attr.role]="isHandset() ? 'dialog' : 'navigation'"
-          [mode]="isHandset() ? 'over' : 'side'"
-          [opened]="!isHandset()"
+          [attr.role]="'navigation'"
+          [mode]="'over'"
+          [opened]="false"
         >
           <mat-toolbar class="sidenav-header">
             <div class="nav-logo-container">
@@ -71,7 +71,8 @@ interface MenuItem {
                 <div class="menu-section">
                   <h3 mat-subheader>{{ item.label }}</h3>
                   @for (child of getVisibleChildren(item.children); track child.route) {
-                    <a mat-list-item [routerLink]="child.route" routerLinkActive="active">
+                    <a mat-list-item [routerLink]="child.route" routerLinkActive="active" 
+                       (click)="onMenuItemClick()">
                       <mat-icon matListItemIcon>{{ child.icon }}</mat-icon>
                       <span matListItemTitle>{{ child.label }}</span>
                     </a>
@@ -79,7 +80,8 @@ interface MenuItem {
                 </div>
               } @else {
                 <!-- Simple menu item -->
-                <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
+                <a mat-list-item [routerLink]="item.route" routerLinkActive="active" 
+                   (click)="onMenuItemClick()">
                   <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
                   <span matListItemTitle>{{ item.label }}</span>
                 </a>
@@ -97,7 +99,6 @@ interface MenuItem {
               aria-label="Toggle sidenav"
               mat-icon-button
               (click)="drawer.toggle()"
-              *ngIf="isHandset()"
             >
               <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
             </button>
@@ -106,7 +107,7 @@ interface MenuItem {
             
             <!-- Notifications -->
             <button mat-icon-button>
-              <mat-icon matBadge="3" matBadgeColor="accent">notifications</mat-icon>
+              <mat-icon matBadge="3" matBadgeColor="accent" aria-hidden="false">notifications</mat-icon>
             </button>
             
             <!-- User Menu -->
@@ -155,7 +156,11 @@ interface MenuItem {
     }
 
     .sidenav {
-      width: 250px;
+      width: 300px;
+      background-color: #ffffff;
+      box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+      border-right: 1px solid #e0e0e0;
+      z-index: 1000;
     }
 
     .sidenav-header {
@@ -253,6 +258,8 @@ interface MenuItem {
       padding: 20px;
       min-height: calc(100vh - 64px);
       background: linear-gradient(135deg, #f8fbff 0%, #e3f2fd 50%, #ffffff 100%);
+      margin-left: 0; /* No margin since we use overlay mode for all screens */
+      width: 100%;
     }
 
     .user-info {
@@ -311,10 +318,51 @@ interface MenuItem {
       .sidenav {
         width: 280px;
       }
+      
+      .sidenav-container {
+        position: relative;
+      }
+      
+      .main-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+      }
+    }
+
+    @media (max-width: 599px) {
+      .sidenav {
+        width: 100vw;
+        max-width: 320px;
+      }
+      
+      .main-content {
+        padding: 12px;
+      }
+      
+      .welcome-header {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .nav-logo-container img {
+        max-width: 40px;
+        height: auto;
+      }
+      
+      .app-title {
+        font-size: 1rem;
+      }
+      
+      .app-subtitle {
+        font-size: 0.8rem;
+      }
     }
   `]
 })
 export class NavigationComponent {
+  @ViewChild('drawer') drawer!: MatSidenav;
+  
   private breakpointObserver = inject(BreakpointObserver);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -322,7 +370,7 @@ export class NavigationComponent {
   currentUser = computed(() => this.authService.currentUser());
   
   isHandset = computed(() => 
-    this.breakpointObserver.isMatched(Breakpoints.Handset)
+    this.breakpointObserver.isMatched([Breakpoints.Handset, Breakpoints.Small, '(max-width: 768px)'])
   );
 
   private menuItems: MenuItem[] = [
@@ -464,5 +512,12 @@ export class NavigationComponent {
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  onMenuItemClick(): void {
+    // Always close sidebar when menu item is clicked (for all screen sizes)
+    if (this.drawer) {
+      this.drawer.close();
+    }
   }
 }

@@ -48,6 +48,62 @@ body {
   min-height: 100vh;
 }
 
+/* Responsive utilities */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure proper responsive behavior */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Mobile-first responsive breakpoints */
+@media (max-width: 599px) {
+  /* Extra small devices (phones) */
+  .mat-mdc-card {
+    margin: 8px !important;
+  }
+  
+  .mat-mdc-form-field {
+    width: 100% !important;
+  }
+  
+  .mat-toolbar {
+    padding: 0 8px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Small devices (tablets) */
+  .mat-mdc-card {
+    margin: 12px !important;
+  }
+  
+  .mat-sidenav-content {
+    margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 959px) {
+  /* Medium devices */
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Success and Error snackbar styles */
+.success-snackbar {
+  --mdc-snackbar-container-color: #4caf50 !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+}
+
+.error-snackbar {
+  --mdc-snackbar-container-color: #f44336 !important;
+  --mdc-snackbar-supporting-text-color: white !important;
+}
+
 // Custom CSS variables for Rand Water theme
 :root {
   --randwater-primary: #2E86AB;
