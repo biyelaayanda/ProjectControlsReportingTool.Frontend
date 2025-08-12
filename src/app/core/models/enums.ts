@@ -1,4 +1,4 @@
-// Enums matching backend
+// Enums matching backend exactly
 export enum UserRole {
   GeneralStaff = 1,
   LineManager = 2,

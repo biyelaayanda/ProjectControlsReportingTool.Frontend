@@ -12,7 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { RegisterDto } from '../../../core/models/user.models';
+import { RegisterRequest } from '../../../core/models/auth.models';
 import { UserRole, Department } from '../../../core/models/enums';
 
 @Component({
@@ -372,9 +372,9 @@ export class RegisterComponent {
     if (this.registerForm.valid && !this.isLoading()) {
       this.isLoading.set(true);
       
-      const registerDto: RegisterDto = this.registerForm.value;
+      const registerRequest: RegisterRequest = this.registerForm.value;
       
-      this.authService.register(registerDto).subscribe({
+      this.authService.register(registerRequest).subscribe({
         next: (response) => {
           this.isLoading.set(false);
           this.snackBar.open('Account created successfully!', 'Close', {

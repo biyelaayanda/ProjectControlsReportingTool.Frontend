@@ -1,238 +1,295 @@
-import { Injectable, signal } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject, throwError } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
+import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { 
-  LoginDto, 
-  RegisterDto, 
-  AuthResponseDto, 
-  UserDto, 
-  ChangePasswordDto, 
-  UpdateProfileDto 
-} from '../models/user.models';
+  User, 
+  LoginRequest, 
+  RegisterRequest, 
+  AuthResponse, 
+  ChangePasswordRequest, 
+  UpdateProfileRequest,
+  JwtPayload 
+} from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = `${environment.apiUrl}/user`;
-  private readonly tokenKey = 'projectcontrols_token';
-  private readonly userKey = 'projectcontrols_user';
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
 
-  // Reactive signals for modern Angular
-  private currentUserSubject = new BehaviorSubject<UserDto | null>(null);
+  private readonly API_URL = `${environment.apiUrl}/auth`;
+  private readonly TOKEN_KEY = 'auth_token';
+  private readonly USER_KEY = 'current_user';
+
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+
   public currentUser$ = this.currentUserSubject.asObservable();
-  
-  // Signal for reactive UI
-  public isAuthenticated = signal<boolean>(false);
-  public currentUser = signal<UserDto | null>(null);
+  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    this.loadUserFromStorage();
+  constructor() {
+    this.initializeAuthState();
   }
 
   /**
-   * User Registration
+   * Initialize authentication state from stored token
    */
-  register(registerDto: RegisterDto): Observable<AuthResponseDto> {
-    return this.http.post<AuthResponseDto>(`${this.apiUrl}/register`, registerDto)
+  private initializeAuthState(): void {
+    const token = this.getStoredToken();
+    const user = this.getStoredUser();
+
+    if (token && user && this.isTokenValid(token)) {
+      this.currentUserSubject.next(user);
+      this.isAuthenticatedSubject.next(true);
+    } else {
+      this.clearAuthData();
+    }
+  }
+
+  /**
+   * Login user with email and password
+   */
+  login(credentials: LoginRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.API_URL}/login`, credentials)
       .pipe(
-        tap(response => this.handleAuthSuccess(response)),
-        catchError(this.handleError)
-      );
-  }
-
-  /**
-   * User Login
-   */
-  login(loginDto: LoginDto): Observable<AuthResponseDto> {
-    return this.http.post<AuthResponseDto>(`${this.apiUrl}/login`, loginDto)
-      .pipe(
-        tap(response => this.handleAuthSuccess(response)),
-        catchError(this.handleError)
-      );
-  }
-
-  /**
-   * User Logout
-   */
-  logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-    this.currentUserSubject.next(null);
-    this.isAuthenticated.set(false);
-    this.currentUser.set(null);
-  }
-
-  /**
-   * Get current user profile
-   */
-  getProfile(): Observable<UserDto> {
-    const userId = this.getCurrentUserId();
-    return this.http.get<UserDto>(`${this.apiUrl}/${userId}`)
-      .pipe(
-        tap(user => {
-          this.currentUser.set(user);
-          this.currentUserSubject.next(user);
-          this.saveUserToStorage(user);
+        tap(response => {
+          if (response.success && response.user && response.token) {
+            this.setAuthData(response.user, response.token);
+          }
         }),
         catchError(this.handleError)
       );
+  }
+
+  /**
+   * Register new user
+   */
+  register(userData: RegisterRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.API_URL}/register`, userData)
+      .pipe(
+        tap(response => {
+          if (response.success && response.user && response.token) {
+            this.setAuthData(response.user, response.token);
+          }
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Logout user
+   */
+  logout(): void {
+    // Call logout endpoint if available
+    this.http.post(`${this.API_URL}/logout`, {}).subscribe({
+      complete: () => {
+        this.clearAuthData();
+        this.router.navigate(['/login']);
+      }
+    });
+  }
+
+  /**
+   * Get current user info from server
+   */
+  getCurrentUser(): Observable<User> {
+    return this.http.get<User>(`${this.API_URL}/me`)
+      .pipe(
+        tap(user => {
+          this.currentUserSubject.next(user);
+          this.storeUser(user);
+        }),
+        catchError(this.handleError)
+      );
+  }
+
+  /**
+   * Change user password
+   */
+  changePassword(passwordData: ChangePasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.API_URL}/change-password`, passwordData)
+      .pipe(catchError(this.handleError));
   }
 
   /**
    * Update user profile
    */
-  updateProfile(updateDto: UpdateProfileDto): Observable<UserDto> {
-    const userId = this.getCurrentUserId();
-    return this.http.put<UserDto>(`${this.apiUrl}/${userId}`, updateDto)
+  updateProfile(profileData: UpdateProfileRequest): Observable<User> {
+    return this.http.put<User>(`${this.API_URL}/profile`, profileData)
       .pipe(
         tap(user => {
-          this.currentUser.set(user);
           this.currentUserSubject.next(user);
-          this.saveUserToStorage(user);
+          this.storeUser(user);
         }),
         catchError(this.handleError)
       );
   }
 
   /**
-   * Change password
+   * Validate JWT token
    */
-  changePassword(changePasswordDto: ChangePasswordDto): Observable<any> {
-    const userId = this.getCurrentUserId();
-    return this.http.post(`${this.apiUrl}/${userId}/change-password`, changePasswordDto)
-      .pipe(catchError(this.handleError));
-  }
-
-  /**
-   * Get all users (admin/manager function)
-   */
-  getAllUsers(): Observable<UserDto[]> {
-    return this.http.get<UserDto[]>(`${this.apiUrl}`)
-      .pipe(catchError(this.handleError));
-  }
-
-  /**
-   * Get users by department
-   */
-  getUsersByDepartment(department: number): Observable<UserDto[]> {
-    return this.http.get<UserDto[]>(`${this.apiUrl}/department/${department}`)
-      .pipe(catchError(this.handleError));
-  }
-
-  /**
-   * Check if user is authenticated
-   */
-  isLoggedIn(): boolean {
-    const token = this.getToken();
-    if (!token) return false;
-    
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const isExpired = payload.exp * 1000 < Date.now();
-      return !isExpired;
-    } catch {
-      return false;
+  validateToken(): Observable<boolean> {
+    const token = this.getStoredToken();
+    if (!token) {
+      return throwError(() => new Error('No token found'));
     }
+
+    return this.http.post<{ valid: boolean }>(`${this.API_URL}/validate`, {})
+      .pipe(
+        map(response => response.valid),
+        catchError(() => {
+          this.clearAuthData();
+          return throwError(() => new Error('Token validation failed'));
+        })
+      );
+  }
+
+  /**
+   * Check if user has specific role
+   */
+  hasRole(role: string): boolean {
+    const currentUser = this.currentUserSubject.value;
+    return currentUser?.roleName?.toLowerCase() === role.toLowerCase();
+  }
+
+  /**
+   * Check if user has any of the specified roles
+   */
+  hasAnyRole(roles: string[]): boolean {
+    return roles.some(role => this.hasRole(role));
+  }
+
+  /**
+   * Get authorization headers with JWT token
+   */
+  getAuthHeaders(): HttpHeaders {
+    const token = this.getStoredToken();
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
   }
 
   /**
    * Get stored JWT token
    */
+  getStoredToken(): string | null {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(this.TOKEN_KEY);
+    }
+    return null;
+  }
+
+  /**
+   * Legacy method for compatibility - alias for getStoredToken
+   */
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return this.getStoredToken();
   }
 
   /**
-   * Get current user ID
+   * Legacy method for compatibility - check if user is logged in
    */
-  getCurrentUserId(): string {
-    const user = this.currentUser();
-    if (!user) throw new Error('No current user found');
-    return user.id;
+  isLoggedIn(): boolean {
+    const token = this.getStoredToken();
+    return token ? this.isTokenValid(token) : false;
   }
 
   /**
-   * Check if current user has specific role
+   * Legacy method for compatibility - get current user as signal-like function
    */
-  hasRole(role: number): boolean {
-    const user = this.currentUser();
-    return user ? user.role === role : false;
+  currentUser(): User | null {
+    return this.currentUserSubject.value;
   }
 
   /**
-   * Check if current user is in specific department
+   * Get stored user data
    */
-  isInDepartment(department: number): boolean {
-    const user = this.currentUser();
-    return user ? user.department === department : false;
+  private getStoredUser(): User | null {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem(this.USER_KEY);
+      return userData ? JSON.parse(userData) : null;
+    }
+    return null;
   }
 
   /**
-   * Handle successful authentication
+   * Store authentication data
    */
-  private handleAuthSuccess(response: AuthResponseDto): void {
-    localStorage.setItem(this.tokenKey, response.token);
-    this.saveUserToStorage(response.user);
-    this.currentUserSubject.next(response.user);
-    this.isAuthenticated.set(true);
-    this.currentUser.set(response.user);
-  }
-
-  /**
-   * Load user from localStorage on app start
-   */
-  private loadUserFromStorage(): void {
-    const token = this.getToken();
-    const userJson = localStorage.getItem(this.userKey);
+  private setAuthData(user: User, token: string): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.TOKEN_KEY, token);
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+    }
     
-    if (token && userJson && this.isLoggedIn()) {
-      try {
-        const user: UserDto = JSON.parse(userJson);
-        this.currentUserSubject.next(user);
-        this.isAuthenticated.set(true);
-        this.currentUser.set(user);
-      } catch {
-        this.logout();
-      }
+    this.currentUserSubject.next(user);
+    this.isAuthenticatedSubject.next(true);
+  }
+
+  /**
+   * Store user data
+   */
+  private storeUser(user: User): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(this.USER_KEY, JSON.stringify(user));
     }
   }
 
   /**
-   * Save user to localStorage
+   * Clear all authentication data
    */
-  private saveUserToStorage(user: UserDto): void {
-    localStorage.setItem(this.userKey, JSON.stringify(user));
+  private clearAuthData(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+    }
+    
+    this.currentUserSubject.next(null);
+    this.isAuthenticatedSubject.next(false);
+  }
+
+  /**
+   * Check if JWT token is valid (not expired)
+   */
+  private isTokenValid(token: string): boolean {
+    try {
+      const payload = this.decodeJwtPayload(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return payload.exp > currentTime;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Decode JWT payload
+   */
+  private decodeJwtPayload(token: string): JwtPayload {
+    const parts = token.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT token');
+    }
+
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
   }
 
   /**
    * Handle HTTP errors
    */
-  private handleError = (error: HttpErrorResponse): Observable<never> => {
-    let errorMessage = 'An unexpected error occurred';
+  private handleError = (error: any): Observable<never> => {
+    console.error('Auth service error:', error);
     
-    if (error.error instanceof ErrorEvent) {
-      // Client-side error
-      errorMessage = error.error.message;
-    } else {
-      // Server-side error
-      if (error.status === 401) {
-        errorMessage = 'Invalid credentials';
-        this.logout();
-      } else if (error.status === 403) {
-        errorMessage = 'Access denied';
-      } else if (error.status === 400) {
-        errorMessage = error.error?.message || 'Invalid request';
-      } else if (error.status === 0) {
-        errorMessage = 'Unable to connect to server. Please check your connection.';
-      } else {
-        errorMessage = `Server error: ${error.status}`;
-      }
+    if (error.status === 401) {
+      this.clearAuthData();
+      this.router.navigate(['/login']);
     }
     
-    console.error('Auth Service Error:', error);
-    return throwError(() => new Error(errorMessage));
-  }
+    return throwError(() => error);
+  };
 }

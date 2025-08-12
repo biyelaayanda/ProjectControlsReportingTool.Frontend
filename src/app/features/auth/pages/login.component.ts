@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { LoginDto } from '../../../core/models/user.models';
+import { LoginRequest } from '../../../core/models/auth.models';
 
 @Component({
   selector: 'app-login',
@@ -331,9 +331,9 @@ export class LoginComponent {
     if (this.loginForm.valid && !this.isLoading()) {
       this.isLoading.set(true);
       
-      const loginDto: LoginDto = this.loginForm.value;
+      const loginRequest: LoginRequest = this.loginForm.value;
       
-      this.authService.login(loginDto).subscribe({
+      this.authService.login(loginRequest).subscribe({
         next: (response) => {
           this.isLoading.set(false);
           this.snackBar.open('Login successful!', 'Close', {
