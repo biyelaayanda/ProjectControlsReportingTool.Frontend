@@ -668,50 +668,16 @@ export class ReportsListComponent implements OnInit {
   private async loadReports(): Promise<void> {
     this.isLoading.set(true);
     try {
-      // In a real app, this would call the API
-      const mockReports: Report[] = [
-        {
-          id: 1,
-          title: 'Monthly Progress Report - January 2025',
-          type: 'Monthly Progress',
-          status: ReportStatus.Completed,
-          department: Department.Engineering,
-          createdBy: 'John Smith',
-          createdDate: new Date('2025-01-15'),
-          dueDate: new Date('2025-02-01'),
-          lastModified: new Date('2025-01-20'),
-          description: 'Comprehensive monthly progress report covering all engineering activities.',
-          priority: 'High'
+      // Call actual API to get reports
+      this.reportsService.getReports().subscribe({
+        next: (response) => {
+          this.reports.set(response.reports || []);
         },
-        {
-          id: 2,
-          title: 'Budget Analysis Q4 2024',
-          type: 'Budget Analysis',
-          status: ReportStatus.ManagerReview,
-          department: Department.Finance,
-          createdBy: 'Sarah Johnson',
-          createdDate: new Date('2025-01-10'),
-          dueDate: new Date('2025-01-25'),
-          lastModified: new Date('2025-01-15'),
-          description: 'Quarterly budget analysis and variance reporting.',
-          priority: 'Medium'
-        },
-        {
-          id: 3,
-          title: 'Risk Assessment - Water Treatment Plant',
-          type: 'Risk Assessment',
-          status: ReportStatus.Draft,
-          department: Department.Operations,
-          createdBy: 'Mike Chen',
-          createdDate: new Date('2025-01-08'),
-          dueDate: new Date('2025-01-30'),
-          lastModified: new Date('2025-01-12'),
-          description: 'Comprehensive risk assessment for the new water treatment facility.',
-          priority: 'Critical'
+        error: (error) => {
+          console.error('Error loading reports:', error);
+          this.reports.set([]);
         }
-      ];
-
-      this.reports.set(mockReports);
+      });
     } catch (error) {
       console.error('Error loading reports:', error);
     } finally {
@@ -879,20 +845,18 @@ export class ReportsListComponent implements OnInit {
       case ReportStatus.ExecutiveReview: return 'Executive Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
-      default: return status.toString();
+      default: return 'Unknown Status';
     }
   }
 
   getDepartmentDisplay(department: Department): string {
     switch (department) {
-      case Department.Engineering: return 'Engineering';
-      case Department.Operations: return 'Operations';
-      case Department.Finance: return 'Finance';
-      case Department.HR: return 'Human Resources';
-      case Department.IT: return 'Information Technology';
-      case Department.QS: return 'Quantity Surveying';
-      case Department.Planning: return 'Planning';
-      default: return department.toString();
+      case Department.ProjectSupport: return 'Project Support';
+      case Department.DocManagement: return 'Document Management';
+      case Department.ContractsManagement: return 'Contracts Management';
+      case Department.BusinessAssurance: return 'Business Assurance';
+      case Department.QS: return 'QS';
+      default: return 'Unknown Department';
     }
   }
 

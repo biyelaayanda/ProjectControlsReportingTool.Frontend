@@ -90,7 +90,7 @@ import { UserRole, Department, ReportStatus } from '../../../core/models/enums';
                   <mat-option value="">All Statuses</mat-option>
                   <mat-option value="Draft">Draft</mat-option>
                   <mat-option value="Submitted">Submitted</mat-option>
-                  <mat-option value="InReview">In Review</mat-option>
+                  <mat-option value="ManagerReview">Manager Review</mat-option>
                   <mat-option value="ManagerReview">Manager Review</mat-option>
                   <mat-option value="ManagerApproved">Manager Approved</mat-option>
                   <mat-option value="ExecutiveReview">Executive Review</mat-option>
@@ -629,167 +629,16 @@ export class ReportsListComponent implements OnInit {
         return;
       }
 
-      // Mock data based on user role - replace with actual API calls
-      let mockReports: Report[] = [];
-
-      if (user.role === UserRole.GeneralStaff) {
-        // General staff - only their own reports
-        mockReports = [
-          {
-            id: 1,
-            title: 'My Monthly Progress Report - January 2025',
-            type: 'Monthly Progress',
-            status: ReportStatus.Draft,
-            department: user.department,
-            createdBy: `${user.firstName} ${user.lastName}`,
-            createdDate: new Date('2025-01-15'),
-            dueDate: new Date('2025-02-01'),
-            lastModified: new Date('2025-01-20'),
-            description: 'My monthly progress report covering all activities.',
-            priority: 'Medium'
-          },
-          {
-            id: 2,
-            title: 'Quality Control Report - December',
-            type: 'Quality Control',
-            status: ReportStatus.Submitted,
-            department: user.department,
-            createdBy: `${user.firstName} ${user.lastName}`,
-            createdDate: new Date('2025-01-05'),
-            dueDate: new Date('2025-01-20'),
-            lastModified: new Date('2025-01-10'),
-            description: 'Monthly quality control report for my assigned activities.',
-            priority: 'Medium'
-          }
-        ];
-      } else if (user.role === UserRole.LineManager) {
-        // Line managers - their team's reports
-        mockReports = [
-          {
-            id: 1,
-            title: 'Team Progress Report - January 2025',
-            type: 'Monthly Progress',
-            status: ReportStatus.Completed,
-            department: user.department,
-            createdBy: 'John Smith',
-            createdDate: new Date('2025-01-15'),
-            dueDate: new Date('2025-02-01'),
-            lastModified: new Date('2025-01-20'),
-            description: 'Team monthly progress report covering all activities.',
-            priority: 'High'
-          },
-          {
-            id: 2,
-            title: 'Quality Control Report - December',
-            type: 'Quality Control',
-            status: ReportStatus.Submitted,
-            department: user.department,
-            createdBy: 'Sarah Johnson',
-            createdDate: new Date('2025-01-05'),
-            dueDate: new Date('2025-01-20'),
-            lastModified: new Date('2025-01-10'),
-            description: 'Quality control report from team member.',
-            priority: 'Medium'
-          },
-          {
-            id: 3,
-            title: 'My Manager Report',
-            type: 'Manager Summary',
-            status: ReportStatus.Draft,
-            department: user.department,
-            createdBy: `${user.firstName} ${user.lastName}`,
-            createdDate: new Date('2025-01-08'),
-            dueDate: new Date('2025-01-30'),
-            lastModified: new Date('2025-01-12'),
-            description: 'Manager summary report for the team.',
-            priority: 'High'
-          }
-        ];
-      } else if (user.role === UserRole.Executive) {
-        // Executives - all reports from all departments
-        mockReports = [
-          {
-            id: 1,
-            title: 'Monthly Progress Report - January 2025',
-            type: 'Monthly Progress',
-            status: ReportStatus.Completed,
-            department: Department.Engineering,
-            createdBy: 'John Smith',
-            createdDate: new Date('2025-01-15'),
-            dueDate: new Date('2025-02-01'),
-            lastModified: new Date('2025-01-20'),
-            description: 'Comprehensive monthly progress report covering all engineering activities.',
-            priority: 'High'
-          },
-          {
-            id: 2,
-            title: 'Budget Analysis Q4 2024',
-            type: 'Budget Analysis',
-            status: ReportStatus.ManagerReview,
-            department: Department.Finance,
-            createdBy: 'Sarah Johnson',
-            createdDate: new Date('2025-01-10'),
-            dueDate: new Date('2025-01-25'),
-            lastModified: new Date('2025-01-15'),
-            description: 'Quarterly budget analysis and variance reporting.',
-            priority: 'Medium'
-          },
-          {
-            id: 3,
-            title: 'Risk Assessment - Water Treatment Plant',
-            type: 'Risk Assessment',
-            status: ReportStatus.Draft,
-            department: Department.Operations,
-            createdBy: 'Mike Chen',
-            createdDate: new Date('2025-01-08'),
-            dueDate: new Date('2025-01-30'),
-            lastModified: new Date('2025-01-12'),
-            description: 'Comprehensive risk assessment for the new water treatment facility.',
-            priority: 'Critical'
-          },
-          {
-            id: 4,
-            title: 'Quality Control Report - December',
-            type: 'Quality Control',
-            status: ReportStatus.Submitted,
-            department: Department.QS,
-            createdBy: 'Linda Williams',
-            createdDate: new Date('2025-01-05'),
-            dueDate: new Date('2025-01-20'),
-            lastModified: new Date('2025-01-10'),
-            description: 'Monthly quality control report for construction activities.',
-            priority: 'Medium'
-          },
-          {
-            id: 5,
-            title: 'HR Performance Review Summary',
-            type: 'Performance Review',
-            status: ReportStatus.Approved,
-            department: Department.HR,
-            createdBy: 'Mary Brown',
-            createdDate: new Date('2025-01-03'),
-            dueDate: new Date('2025-01-15'),
-            lastModified: new Date('2025-01-08'),
-            description: 'Quarterly performance review summary for all departments.',
-            priority: 'Medium'
-          },
-          {
-            id: 6,
-            title: 'IT Infrastructure Report',
-            type: 'Infrastructure',
-            status: ReportStatus.ExecutiveReview,
-            department: Department.IT,
-            createdBy: 'David Wilson',
-            createdDate: new Date('2025-01-12'),
-            dueDate: new Date('2025-02-05'),
-            lastModified: new Date('2025-01-18'),
-            description: 'Monthly IT infrastructure status and upgrade recommendations.',
-            priority: 'High'
-          }
-        ];
-      }
-
-      this.reports.set(mockReports);
+      // Call actual API to get reports
+      this.reportsService.getReports().subscribe({
+        next: (response) => {
+          this.reports.set(response.reports || []);
+        },
+        error: (error) => {
+          console.error('Error loading reports:', error);
+          this.reports.set([]);
+        }
+      });
     } catch (error) {
       console.error('Error loading reports:', error);
     } finally {
@@ -844,7 +693,6 @@ export class ReportsListComponent implements OnInit {
     // Line managers can edit their team's reports in certain statuses
     if (user.role === UserRole.LineManager && report.department === user.department) {
       return report.status === ReportStatus.Submitted || 
-             report.status === ReportStatus.InReview ||
              report.status === ReportStatus.ManagerReview;
     }
 
@@ -885,12 +733,12 @@ export class ReportsListComponent implements OnInit {
     switch (status) {
       case ReportStatus.Draft: return 'Draft';
       case ReportStatus.Submitted: return 'Submitted';
-      case ReportStatus.InReview: return 'InReview';
+      case ReportStatus.ManagerReview: return 'ManagerReview';
       case ReportStatus.ManagerReview: return 'ManagerReview';
       case ReportStatus.ManagerApproved: return 'ManagerApproved';
       case ReportStatus.ExecutiveReview: return 'ExecutiveReview';
-      case ReportStatus.Approved: return 'Approved';
-      case ReportStatus.Published: return 'Published';
+      case ReportStatus.ManagerApproved: return 'ManagerApproved';
+      case ReportStatus.ExecutiveReview: return 'ExecutiveReview';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
       default: return 'Unknown';
@@ -904,12 +752,11 @@ export class ReportsListComponent implements OnInit {
       case Department.QS: return 'QS';
       case Department.ContractsManagement: return 'ContractsManagement';
       case Department.BusinessAssurance: return 'BusinessAssurance';
-      case Department.Engineering: return 'Engineering';
-      case Department.Operations: return 'Operations';
-      case Department.Finance: return 'Finance';
-      case Department.HR: return 'HR';
-      case Department.IT: return 'IT';
-      case Department.Planning: return 'Planning';
+      case Department.ProjectSupport: return 'Project Support';
+      case Department.DocManagement: return 'Document Management';
+      case Department.QS: return 'QS';
+      case Department.ContractsManagement: return 'Contracts Management';
+      case Department.BusinessAssurance: return 'Business Assurance';
       default: return 'Unknown';
     }
   }
