@@ -15,6 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportsService, Report } from '../../../core/services/reports.service';
@@ -39,7 +40,8 @@ import { CreateReportComponent } from '../components/create-report.component';
     MatProgressSpinnerModule,
     MatDatepickerModule,
     MatNativeDateModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSnackBarModule
   ],
   template: `
     <div class="reports-container">
@@ -183,6 +185,12 @@ import { CreateReportComponent } from '../components/create-report.component';
                           <mat-icon>visibility</mat-icon>
                           View
                         </button>
+                        @if (canSubmitReport(report)) {
+                          <button mat-menu-item (click)="submitReport(report.id)" class="submit-action">
+                            <mat-icon>send</mat-icon>
+                            Submit for Review
+                          </button>
+                        }
                         @if (canEditReport(report)) {
                           <button mat-menu-item (click)="editReport(report.id)">
                             <mat-icon>edit</mat-icon>
@@ -555,6 +563,7 @@ export class ReportsListComponent implements OnInit {
   private reportsService = inject(ReportsService);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private snackBar = inject(MatSnackBar);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -802,6 +811,58 @@ export class ReportsListComponent implements OnInit {
     }
 
     return false;
+  }
+
+  canSubmitReport(report: Report): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+
+    // Only the creator can submit their own draft reports
+    if (report.creatorName === `${user.firstName} ${user.lastName}`) {
+      return report.status === ReportStatus.Draft;
+    }
+
+    return false;
+  }
+
+  submitReport(id: string): void {
+    const report = this.reports().find(r => r.id === id);
+    if (!report) return;
+
+    console.log('Submitting report:', id);
+    console.log('Report found:', report);
+    console.log('Submit URL:', `${this.reportsService['apiUrl']}/${id}/submit`);
+
+    this.reportsService.submitReport(id).subscribe({
+      next: (updatedReport) => {
+        console.log('Submit successful:', updatedReport);
+        this.snackBar.open(
+          `Report "${updatedReport.title}" submitted for Line Manager review successfully!`,
+          'Close',
+          { duration: 5000, panelClass: ['success-snackbar'] }
+        );
+        // Update the report in the local list
+        const currentReports = this.reports();
+        const updatedReports = currentReports.map(r => 
+          r.id === id ? updatedReport : r
+        );
+        this.reports.set(updatedReports);
+      },
+      error: (error) => {
+        console.error('Error submitting report:', error);
+        console.error('Error details:', {
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url,
+          message: error.message
+        });
+        this.snackBar.open(
+          'Failed to submit report for review. Please try again.',
+          'Close',
+          { duration: 5000, panelClass: ['error-snackbar'] }
+        );
+      }
+    });
   }
 
   getStatusDisplay(status: ReportStatus): string {

@@ -163,17 +163,32 @@ import { Department, UserRole } from '../../../core/models/enums';
           Cancel
         </button>
         <button 
-          mat-raised-button 
+          mat-stroked-button 
           color="primary" 
-          (click)="onSubmit()"
+          (click)="onSaveAsDraft()"
           [disabled]="reportForm.invalid || isSubmitting()">
-          @if (isSubmitting()) {
+          @if (isSubmitting() && !isSubmittingForReview()) {
             <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
-            Creating...
+            Saving...
           } @else {
             <ng-container>
               <mat-icon>save</mat-icon>
-              Create Report
+              Save as Draft
+            </ng-container>
+          }
+        </button>
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="onSubmitForReview()"
+          [disabled]="reportForm.invalid || isSubmitting()">
+          @if (isSubmitting() && isSubmittingForReview()) {
+            <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
+            Submitting...
+          } @else {
+            <ng-container>
+              <mat-icon>send</mat-icon>
+              Submit for Review
             </ng-container>
           }
         </button>
@@ -259,6 +274,7 @@ export class CreateReportComponent implements OnInit {
   private dialogRef = inject(MatDialogRef<CreateReportComponent>);
 
   isSubmitting = signal(false);
+  isSubmittingForReview = signal(false);
   
   // Get current user info as a proper signal
   private currentUser = toSignal(this.authService.currentUser$, { initialValue: null });
@@ -372,7 +388,11 @@ export class CreateReportComponent implements OnInit {
   }
 
   onSubmit(): void {
-    console.log('Form submission started');
+    this.onSaveAsDraft();
+  }
+
+  onSaveAsDraft(): void {
+    console.log('Form submission started (Save as Draft)');
     console.log('Form valid:', this.reportForm.valid);
     console.log('Form value:', this.reportForm.value);
     console.log('Department control value:', this.reportForm.get('department')?.value);
@@ -380,6 +400,7 @@ export class CreateReportComponent implements OnInit {
     
     if (this.reportForm.valid && !this.isSubmitting()) {
       this.isSubmitting.set(true);
+      this.isSubmittingForReview.set(false);
 
       const formValue = this.reportForm.value;
       const createDto: CreateReportDto = {
@@ -392,16 +413,76 @@ export class CreateReportComponent implements OnInit {
         department: formValue.department
       };
 
-      console.log('Creating report with data:', createDto);
+      console.log('Creating report with data (Draft):', createDto);
 
       this.reportsService.createReport(createDto).subscribe({
         next: (report) => {
           this.snackBar.open(
-            `Report "${report.title}" created successfully!`,
+            `Report "${report.title}" saved as draft successfully!`,
             'Close',
             { duration: 5000, panelClass: ['success-snackbar'] }
           );
           this.dialogRef.close(report);
+        },
+        error: (error) => {
+          console.error('Error creating report:', error);
+          this.snackBar.open(
+            'Failed to save report. Please try again.',
+            'Close',
+            { duration: 5000, panelClass: ['error-snackbar'] }
+          );
+          this.isSubmitting.set(false);
+        }
+      });
+    }
+  }
+
+  onSubmitForReview(): void {
+    console.log('Form submission started (Submit for Review)');
+    console.log('Form valid:', this.reportForm.valid);
+    console.log('Form value:', this.reportForm.value);
+    
+    if (this.reportForm.valid && !this.isSubmitting()) {
+      this.isSubmitting.set(true);
+      this.isSubmittingForReview.set(true);
+
+      const formValue = this.reportForm.value;
+      const createDto: CreateReportDto = {
+        title: formValue.title,
+        content: formValue.content || '',
+        description: formValue.description || undefined,
+        type: formValue.type || undefined,
+        priority: formValue.priority,
+        dueDate: formValue.dueDate || undefined,
+        department: formValue.department
+      };
+
+      console.log('Creating report with data (Submit for Review):', createDto);
+
+      // First create the report as draft, then submit it
+      this.reportsService.createReport(createDto).subscribe({
+        next: (report) => {
+          console.log('Report created, now submitting for review...');
+          // Now submit the created report for review
+          this.reportsService.submitReport(report.id).subscribe({
+            next: (submittedReport) => {
+              this.snackBar.open(
+                `Report "${submittedReport.title}" submitted for Line Manager review successfully!`,
+                'Close',
+                { duration: 5000, panelClass: ['success-snackbar'] }
+              );
+              this.dialogRef.close(submittedReport);
+            },
+            error: (error) => {
+              console.error('Error submitting report for review:', error);
+              this.snackBar.open(
+                'Report created but failed to submit for review. You can submit it later from the reports list.',
+                'Close',
+                { duration: 7000, panelClass: ['warning-snackbar'] }
+              );
+              this.dialogRef.close(report);
+            }
+          });
         },
         error: (error) => {
           console.error('Error creating report:', error);
@@ -411,6 +492,7 @@ export class CreateReportComponent implements OnInit {
             { duration: 5000, panelClass: ['error-snackbar'] }
           );
           this.isSubmitting.set(false);
+          this.isSubmittingForReview.set(false);
         }
       });
     }
