@@ -255,6 +255,24 @@ interface Report {
                             Edit
                           </button>
                         }
+                        @if (canSubmitReport(report)) {
+                          <button mat-menu-item (click)="submitReport(report.id)" class="submit-action">
+                            <mat-icon>send</mat-icon>
+                            Submit for Review
+                          </button>
+                        }
+                        @if (canApproveReport(report)) {
+                          <button mat-menu-item (click)="approveReport(report.id)" class="approve-action">
+                            <mat-icon>check_circle</mat-icon>
+                            Approve
+                          </button>
+                        }
+                        @if (canRejectReport(report)) {
+                          <button mat-menu-item (click)="rejectReport(report.id)" class="reject-action">
+                            <mat-icon>cancel</mat-icon>
+                            Reject
+                          </button>
+                        }
                         @if (canDeleteReport(report)) {
                           <button mat-menu-item (click)="deleteReport(report.id)" class="delete-action">
                             <mat-icon>delete</mat-icon>
@@ -295,6 +313,24 @@ interface Report {
                           <button mat-menu-item (click)="editReport(report.id)">
                             <mat-icon>edit</mat-icon>
                             Edit
+                          </button>
+                        }
+                        @if (canSubmitReport(report)) {
+                          <button mat-menu-item (click)="submitReport(report.id)" class="submit-action">
+                            <mat-icon>send</mat-icon>
+                            Submit for Review
+                          </button>
+                        }
+                        @if (canApproveReport(report)) {
+                          <button mat-menu-item (click)="approveReport(report.id)" class="approve-action">
+                            <mat-icon>check_circle</mat-icon>
+                            Approve
+                          </button>
+                        }
+                        @if (canRejectReport(report)) {
+                          <button mat-menu-item (click)="rejectReport(report.id)" class="reject-action">
+                            <mat-icon>cancel</mat-icon>
+                            Reject
                           </button>
                         }
                         @if (canDeleteReport(report)) {
@@ -716,6 +752,50 @@ export class ReportsListComponent implements OnInit {
     // Export report functionality
   }
 
+  submitReport(id: number): void {
+    this.reportsService.submitReport(id).subscribe({
+      next: (updatedReport) => {
+        console.log('Report submitted successfully:', updatedReport);
+        this.loadReports(); // Refresh the list
+        // Could show a success message here
+      },
+      error: (error) => {
+        console.error('Error submitting report:', error);
+        // Could show an error message here
+      }
+    });
+  }
+
+  approveReport(id: number): void {
+    // Could open a dialog for comments, for now just approve
+    this.reportsService.approveReport(id).subscribe({
+      next: (updatedReport) => {
+        console.log('Report approved successfully:', updatedReport);
+        this.loadReports(); // Refresh the list
+        // Could show a success message here
+      },
+      error: (error) => {
+        console.error('Error approving report:', error);
+        // Could show an error message here
+      }
+    });
+  }
+
+  rejectReport(id: number): void {
+    // Could open a dialog for rejection reason, for now just reject with default reason
+    this.reportsService.rejectReport(id, 'Report rejected by reviewer').subscribe({
+      next: (updatedReport) => {
+        console.log('Report rejected successfully:', updatedReport);
+        this.loadReports(); // Refresh the list
+        // Could show a success message here
+      },
+      error: (error) => {
+        console.error('Error rejecting report:', error);
+        // Could show an error message here
+      }
+    });
+  }
+
   canEditReport(report: Report): boolean {
     const user = this.currentUser();
     if (!user) return false;
@@ -738,6 +818,56 @@ export class ReportsListComponent implements OnInit {
     
     return report.createdBy === `${user.firstName} ${user.lastName}` && 
            report.status === ReportStatus.Draft;
+  }
+
+  canSubmitReport(report: Report): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+
+    // Only staff can submit their own draft reports
+    return user.role === UserRole.GeneralStaff && 
+           report.createdBy === `${user.firstName} ${user.lastName}` && 
+           report.status === ReportStatus.Draft;
+  }
+
+  canApproveReport(report: Report): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+
+    // Line managers can approve submitted reports from their department
+    if (user.role === UserRole.LineManager && 
+        report.department === user.department && 
+        report.status === ReportStatus.Submitted) {
+      return true;
+    }
+
+    // Executives can approve manager-approved reports
+    if (user.role === UserRole.Executive && 
+        report.status === ReportStatus.ManagerApproved) {
+      return true;
+    }
+
+    return false;
+  }
+
+  canRejectReport(report: Report): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+
+    // Line managers can reject submitted reports from their department
+    if (user.role === UserRole.LineManager && 
+        report.department === user.department && 
+        (report.status === ReportStatus.Submitted || report.status === ReportStatus.ManagerReview)) {
+      return true;
+    }
+
+    // Executives can reject manager-approved reports
+    if (user.role === UserRole.Executive && 
+        (report.status === ReportStatus.ManagerApproved || report.status === ReportStatus.ExecutiveReview)) {
+      return true;
+    }
+
+    return false;
   }
 
   getStatusDisplay(status: ReportStatus): string {
