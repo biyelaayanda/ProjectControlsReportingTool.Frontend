@@ -84,8 +84,11 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.API_URL}/register`, userData)
       .pipe(
         tap(response => {
-          if (response.success && response.user && response.token) {
-            this.setAuthData(response.user, response.token);
+          // Don't auto-login after registration - let user login manually
+          // This ensures proper workflow and user verification
+          if (response.token && response.user && !response.errorMessage) {
+            // Registration successful but don't store auth data yet
+            console.log('Registration successful for:', response.user.email);
           }
         }),
         catchError(this.handleError)

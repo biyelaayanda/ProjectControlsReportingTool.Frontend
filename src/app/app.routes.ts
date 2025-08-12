@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
 import { ReportsListComponent } from './features/reports/pages/simple-reports-list.component';
+import { ReportDetailsComponent } from './features/reports/components/report-details.component';
 import { ProfileComponent } from './features/profile/profile.component';
 import { NavigationComponent } from './shared/components/navigation.component';
 import { authGuard, roleGuard } from './core/guards/auth.guard';
@@ -26,6 +27,10 @@ export const routes: Routes = [
       {
         path: 'reports',
         component: ReportsListComponent
+      },
+      {
+        path: 'reports/:id',
+        component: ReportDetailsComponent
       },
       {
         path: 'profile',

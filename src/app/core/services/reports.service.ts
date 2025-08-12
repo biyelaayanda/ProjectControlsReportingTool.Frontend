@@ -33,12 +33,12 @@ export interface ReportFilter {
 
 export interface CreateReportDto {
   title: string;
-  type: string;
-  department: Department;
+  content: string;
   description?: string;
+  type?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   dueDate?: Date;
-  content?: any;
+  department: Department;
 }
 
 export interface UpdateReportDto {
@@ -48,6 +48,25 @@ export interface UpdateReportDto {
   priority?: 'Low' | 'Medium' | 'High' | 'Critical';
   dueDate?: Date;
   content?: any;
+}
+
+export interface ReportApprovalDto {
+  comments?: string;
+}
+
+export interface ReportRejectionDto {
+  reason: string;
+}
+
+export interface UpdateReportStatusDto {
+  status: ReportStatus;
+  comments?: string;
+}
+
+export interface WorkflowResult {
+  success: boolean;
+  errorMessage?: string;
+  report?: Report;
 }
 
 export interface ReportsResponse {

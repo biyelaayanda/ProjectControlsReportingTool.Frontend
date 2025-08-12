@@ -150,3 +150,36 @@ img {
   justify-content: center;
   z-index: 9999;
 }
+
+/* Create Report Dialog Styles */
+.create-report-dialog {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+  
+  .mat-mdc-dialog-content {
+    padding: 0 24px !important;
+    margin: 0 !important;
+  }
+  
+  .mat-mdc-dialog-actions {
+    padding: 16px 24px !important;
+    margin: 0 !important;
+    border-top: 1px solid #e0e0e0;
+  }
+}
+
+/* Snackbar styles for success and error */
+.success-snackbar {
+  .mat-mdc-snack-bar-container {
+    background-color: #4caf50 !important;
+    color: white !important;
+  }
+}
+
+.error-snackbar {
+  .mat-mdc-snack-bar-container {
+    background-color: #f44336 !important;
+    color: white !important;
+  }
+}

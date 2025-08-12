@@ -386,13 +386,28 @@ export class RegisterComponent {
       this.authService.register(registerRequest).subscribe({
         next: (response) => {
           this.isLoading.set(false);
-          this.snackBar.open('Account created successfully!', 'Close', {
-            duration: 3000,
-            panelClass: ['success-snackbar']
-          });
           
-          // Redirect to reports after successful registration
-          this.router.navigate(['/reports']);
+          // Check if registration was successful (has token and user)
+          if (response.token && response.user && !response.errorMessage) {
+            this.snackBar.open('Registration successful! Please login with your credentials.', 'Close', {
+              duration: 5000,
+              panelClass: ['success-snackbar']
+            });
+            
+            // Redirect to login page after successful registration
+            this.router.navigate(['/login'], { 
+              queryParams: { 
+                message: 'Registration successful! Please login with your new account.' 
+              }
+            });
+          } else {
+            // Handle registration failure from response
+            const errorMessage = response.errorMessage || 'Registration failed. Please try again.';
+            this.snackBar.open(errorMessage, 'Close', {
+              duration: 8000,
+              panelClass: ['error-snackbar']
+            });
+          }
         },
         error: (error) => {
           this.isLoading.set(false);
@@ -410,7 +425,7 @@ export class RegisterComponent {
                 errorMessage = 'Please enter a valid email address.';
                 break;
               case 'Password does not meet requirements':
-                errorMessage = 'Password must be at least 8 characters with uppercase, lowercase, number and special character.';
+                errorMessage = 'Password must be at least 6 characters long.';
                 break;
               default:
                 errorMessage = error.error.message;

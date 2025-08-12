@@ -1,5 +1,6 @@
 import { Component, computed, signal, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,10 +14,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ReportsService, Report } from '../../../core/services/reports.service';
 import { UserRole, Department, ReportStatus } from '../../../core/models/enums';
+import { CreateReportComponent } from '../components/create-report.component';
 
 @Component({
   selector: 'app-reports-list',
@@ -35,7 +38,8 @@ import { UserRole, Department, ReportStatus } from '../../../core/models/enums';
     MatMenuModule,
     MatProgressSpinnerModule,
     MatDatepickerModule,
-    MatNativeDateModule
+    MatNativeDateModule,
+    MatDialogModule
   ],
   template: `
     <div class="reports-container">
@@ -550,6 +554,9 @@ export class ReportsListComponent implements OnInit {
   private authService = inject(AuthService);
   private reportsService = inject(ReportsService);
   private fb = inject(FormBuilder);
+  private dialog = inject(MatDialog);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   // Signals
   isLoading = signal(false);
@@ -618,6 +625,23 @@ export class ReportsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadReports();
+    
+    // Handle query parameters from dashboard navigation
+    this.route.queryParams.subscribe(params => {
+      if (params['action'] === 'create') {
+        // Auto-open create dialog
+        setTimeout(() => this.createReport(), 100);
+      }
+      
+      if (params['filter']) {
+        this.applyPresetFilter(params['filter']);
+      }
+      
+      if (params['status']) {
+        this.filtersForm.patchValue({ status: params['status'] });
+        this.applyFilters();
+      }
+    });
   }
 
   private async loadReports(): Promise<void> {
@@ -655,15 +679,45 @@ export class ReportsListComponent implements OnInit {
     this.filtersForm.reset();
   }
 
+  applyPresetFilter(filterType: string): void {
+    switch (filterType) {
+      case 'my-reports':
+        // Filter applied through computed signal based on user role
+        this.filtersForm.reset();
+        break;
+      case 'pending-reviews':
+        this.filtersForm.patchValue({ 
+          status: [ReportStatus.ManagerReview, ReportStatus.ExecutiveReview] 
+        });
+        break;
+      case 'team-reports':
+        // Filter will be applied automatically based on user role
+        this.filtersForm.reset();
+        break;
+      default:
+        this.filtersForm.reset();
+    }
+    this.applyFilters();
+  }
+
   createReport(): void {
-    // Navigate to create report page or open modal
-    console.log('Create new report');
-    alert('Create Report functionality would be implemented here');
+    const dialogRef = this.dialog.open(CreateReportComponent, {
+      width: '600px',
+      maxHeight: '90vh',
+      disableClose: true,
+      panelClass: 'create-report-dialog'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Report was created successfully, refresh the list
+        this.loadReports();
+      }
+    });
   }
 
   viewReport(id: number): void {
-    console.log('View report:', id);
-    alert(`View Report ${id} - functionality would be implemented here`);
+    this.router.navigate(['/reports', id]);
   }
 
   editReport(id: number): void {
