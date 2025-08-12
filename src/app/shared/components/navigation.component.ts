@@ -385,9 +385,9 @@ export class NavigationComponent {
       route: '/reports',
       children: [
         {
-          label: 'My Reports',
-          icon: 'folder',
-          route: '/reports/my-reports'
+          label: 'My Dashboard',
+          icon: 'dashboard',
+          route: '/reports'
         },
         {
           label: 'Create Report',
@@ -395,7 +395,7 @@ export class NavigationComponent {
           route: '/reports/create'
         },
         {
-          label: 'Review Reports',
+          label: 'Department Reviews',
           icon: 'rate_review',
           route: '/reports/review',
           roles: [UserRole.LineManager, UserRole.Executive]

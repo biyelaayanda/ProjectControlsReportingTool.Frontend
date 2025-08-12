@@ -51,22 +51,34 @@ import { CreateReportComponent } from '../components/create-report.component';
           <div class="header-text">
             <h1 class="page-title">
               <mat-icon>description</mat-icon>
-              Project Controls Reports
+              @if (isReviewPage()) {
+                Review Reports
+              } @else {
+                Project Controls Reports
+              }
               @if (isGeneralStaff()) {
                 <mat-chip class="role-chip staff-chip">My Reports</mat-chip>
               } @else if (isLineManager()) {
-                <mat-chip class="role-chip manager-chip">Team Reports</mat-chip>
+                <mat-chip class="role-chip manager-chip">@if (isReviewPage()) {Department Reviews} @else {My Reports}</mat-chip>
               } @else if (isExecutive()) {
-                <mat-chip class="role-chip executive-chip">All Reports</mat-chip>
+                <mat-chip class="role-chip executive-chip">@if (isReviewPage()) {Executive Reviews} @else {All Reports}</mat-chip>
               }
             </h1>
             <p class="page-subtitle">
-              @if (isGeneralStaff()) {
-                Manage and track your project controls reports for Rand Water
-              } @else if (isLineManager()) {
-                Manage and track your team's project controls reports for Rand Water
-              } @else if (isExecutive()) {
-                Executive view of all project controls reports across Rand Water
+              @if (isReviewPage()) {
+                @if (isLineManager()) {
+                  Review and approve reports submitted by your department members
+                } @else if (isExecutive()) {
+                  Review and approve reports approved by Line Managers
+                }
+              } @else {
+                @if (isGeneralStaff()) {
+                  Manage and track your project controls reports for Rand Water
+                } @else if (isLineManager()) {
+                  Manage your own reports and oversee your department's reporting activities
+                } @else if (isExecutive()) {
+                  Executive view of all project controls reports across Rand Water
+                }
               }
             </p>
           </div>
@@ -189,6 +201,18 @@ import { CreateReportComponent } from '../components/create-report.component';
                           <button mat-menu-item (click)="submitReport(report.id)" class="submit-action">
                             <mat-icon>send</mat-icon>
                             Submit for Review
+                          </button>
+                        }
+                        @if (canApproveReport(report)) {
+                          <button mat-menu-item (click)="approveReport(report.id)" class="approve-action">
+                            <mat-icon>check_circle</mat-icon>
+                            Approve
+                          </button>
+                        }
+                        @if (canRejectReport(report)) {
+                          <button mat-menu-item (click)="rejectReport(report.id)" class="reject-action">
+                            <mat-icon>cancel</mat-icon>
+                            Reject
                           </button>
                         }
                         @if (canEditReport(report)) {
@@ -571,6 +595,7 @@ export class ReportsListComponent implements OnInit {
   isLoading = signal(false);
   reports = signal<Report[]>([]);
   currentUserSignal = signal<any>(null);
+  isReviewPage = signal(false);
   
   // Form
   filtersForm: FormGroup;
@@ -614,9 +639,55 @@ export class ReportsListComponent implements OnInit {
       return userReports;
     }
 
-    // Line managers and executives see all reports for now
-    console.log('Debug - User is manager/executive, showing all reports');
-    return allReports;
+    // For Line Managers: Show department reports that need their attention
+    if (this.isLineManager()) {
+      console.log('Debug - User is line manager, showing department reports needing attention');
+      
+      const departmentReports = allReports.filter(report => {
+        const userFullName = `${user.firstName} ${user.lastName}`;
+        const isOwnReport = report.creatorName === userFullName;
+        
+        if (this.isReviewPage()) {
+          // On REVIEW page: Only show reports from department members that need manager approval
+          const needsManagerApproval = report.department === user.department && 
+            report.creatorName !== userFullName && // NOT their own reports
+            report.status === ReportStatus.Submitted; // Only submitted reports needing approval
+          
+          console.log(`Debug - Review Page - Report "${report.title}" (${report.status}) - Include: ${needsManagerApproval} (dept: ${report.department}, needsApproval: ${report.status === ReportStatus.Submitted}, notOwn: ${report.creatorName !== userFullName})`);
+          return needsManagerApproval;
+        } else {
+          // On DASHBOARD/MAIN page: Show ONLY their own reports (manager's personal reports)
+          console.log(`Debug - Dashboard - Report "${report.title}" (${report.status}) - Include: ${isOwnReport} (own: ${isOwnReport})`);
+          return isOwnReport;
+        }
+      });
+      
+      console.log('Debug - Filtered department reports:', departmentReports);
+      return departmentReports;
+    }
+
+    // For Executives: Show all reports that need executive review or completed reports
+    if (this.isExecutive()) {
+      console.log('Debug - User is executive, showing reports needing executive attention');
+      
+      const executiveReports = allReports.filter(report => {
+        const userFullName = `${user.firstName} ${user.lastName}`;
+        const isOwnReport = report.creatorName === userFullName;
+        const needsExecReview = report.status === ReportStatus.ManagerApproved ||
+          report.status === ReportStatus.ExecutiveReview ||
+          report.status === ReportStatus.Completed;
+        
+        // On review page, only show reports that need executive attention (not own reports)
+        return this.isReviewPage() ? needsExecReview : (isOwnReport || needsExecReview);
+      });
+      
+      console.log('Debug - Filtered executive reports:', executiveReports);
+      return executiveReports;
+    }
+
+    // Fallback: no reports
+    console.log('Debug - Unknown role, showing no reports');
+    return [];
   });
 
   hasFilters = computed(() => {
@@ -642,6 +713,15 @@ export class ReportsListComponent implements OnInit {
     });
 
     this.loadReports();
+    
+    // Check current route for review page
+    const currentRoute = this.router.url;
+    if (currentRoute.includes('/reports/review')) {
+      console.log('Debug - On review page, applying review filters');
+      this.isReviewPage.set(true);
+      // For review page, we want to show only reports that need attention
+      // This is already handled by the filteredReports computed property for Line Managers and Executives
+    }
     
     // Handle query parameters from dashboard navigation
     this.route.queryParams.subscribe(params => {
@@ -858,6 +938,102 @@ export class ReportsListComponent implements OnInit {
         });
         this.snackBar.open(
           'Failed to submit report for review. Please try again.',
+          'Close',
+          { duration: 5000, panelClass: ['error-snackbar'] }
+        );
+      }
+    });
+  }
+
+  canApproveReport(report: Report): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+
+    // Only Line Managers can approve reports from their department
+    if (user.role === UserRole.LineManager) {
+      return report.department === user.department && 
+             report.status === ReportStatus.Submitted;
+    }
+
+    // Executives can approve manager-approved reports
+    if (user.role === UserRole.Executive) {
+      return report.status === ReportStatus.ManagerApproved;
+    }
+
+    return false;
+  }
+
+  canRejectReport(report: Report): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+
+    // Line Managers can reject submitted reports from their department
+    if (user.role === UserRole.LineManager) {
+      return report.department === user.department && 
+             report.status === ReportStatus.Submitted;
+    }
+
+    // Executives can reject manager-approved reports
+    if (user.role === UserRole.Executive) {
+      return report.status === ReportStatus.ManagerApproved;
+    }
+
+    return false;
+  }
+
+  approveReport(id: string): void {
+    const report = this.reports().find(r => r.id === id);
+    if (!report) return;
+
+    // For now, approve without comments - we can add a dialog later
+    this.reportsService.approveReport(id).subscribe({
+      next: (updatedReport) => {
+        this.snackBar.open(
+          `Report "${updatedReport.title}" approved successfully!`,
+          'Close',
+          { duration: 5000, panelClass: ['success-snackbar'] }
+        );
+        // Update the report in the local list
+        const currentReports = this.reports();
+        const updatedReports = currentReports.map(r => 
+          r.id === id ? updatedReport : r
+        );
+        this.reports.set(updatedReports);
+      },
+      error: (error) => {
+        console.error('Error approving report:', error);
+        this.snackBar.open(
+          'Failed to approve report. Please try again.',
+          'Close',
+          { duration: 5000, panelClass: ['error-snackbar'] }
+        );
+      }
+    });
+  }
+
+  rejectReport(id: string): void {
+    const report = this.reports().find(r => r.id === id);
+    if (!report) return;
+
+    // For now, reject with generic reason - we can add a dialog later
+    this.reportsService.rejectReport(id, 'Rejected by Line Manager').subscribe({
+      next: (updatedReport) => {
+        this.snackBar.open(
+          `Report "${updatedReport.title}" rejected successfully!`,
+          'Close',
+          { duration: 5000, panelClass: ['success-snackbar'] }
+        );
+        // Update the report in the local list
+        const currentReports = this.reports();
+        const updatedReports = currentReports.map(r => 
+          r.id === id ? updatedReport : r
+        );
+        this.reports.set(updatedReports);
+      },
+      error: (error) => {
+        console.error('Error rejecting report:', error);
+        this.snackBar.open(
+          'Failed to reject report. Please try again.',
           'Close',
           { duration: 5000, panelClass: ['error-snackbar'] }
         );

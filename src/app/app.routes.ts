@@ -29,6 +29,10 @@ export const routes: Routes = [
         component: ReportsListComponent
       },
       {
+        path: 'reports/review',
+        component: ReportsListComponent
+      },
+      {
         path: 'reports/:id',
         component: ReportDetailsComponent
       },
