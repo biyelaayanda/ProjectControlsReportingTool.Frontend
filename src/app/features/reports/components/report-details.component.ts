@@ -395,7 +395,8 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     [userDepartment]="currentUser()!.department"
                     [reportDepartment]="report()!.department"
                     [createdBy]="report()!.creatorName"
-                    [currentUserEmail]="currentUser()!.email">
+                    [currentUserEmail]="currentUser()!.email"
+                    [creatorRole]="report()!.creatorRole">
                   </app-workflow-tracker>
                 } @else {
                   <div class="loading-container">

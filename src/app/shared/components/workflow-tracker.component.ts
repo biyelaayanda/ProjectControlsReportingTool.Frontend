@@ -314,10 +314,15 @@ export class WorkflowTrackerComponent {
   reportDepartment = input.required<number>();
   createdBy = input.required<string>();
   currentUserEmail = input.required<string>();
+  creatorRole = input.required<UserRole>(); // Add creator role input
 
   // Computed workflow steps
   workflowSteps = computed(() => {
     const status = this.currentStatus();
+    const creatorRole = this.creatorRole();
+    
+    // Check if report was created by a Line Manager
+    const isCreatedByManager = creatorRole === UserRole.LineManager;
     
     const steps: WorkflowStep[] = [
       {
@@ -331,50 +336,64 @@ export class WorkflowTrackerComponent {
       },
       {
         status: ReportStatus.Submitted,
-        label: 'Submitted for Review',
+        label: isCreatedByManager ? 'Submitted for Executive Review' : 'Submitted for Review',
         icon: 'send',
-        description: 'Report has been submitted to Line Manager for review',
+        description: isCreatedByManager ? 
+          'Report has been submitted directly to Executive for review (created by Line Manager)' :
+          'Report has been submitted to Line Manager for review',
         isCompleted: status > ReportStatus.Submitted,
         isCurrent: status === ReportStatus.Submitted,
         isAvailable: status >= ReportStatus.Draft
-      },
-      {
-        status: ReportStatus.ManagerReview,
-        label: 'Manager Review',
-        icon: 'rate_review',
-        description: 'Line Manager is reviewing the report content and quality',
-        isCompleted: status > ReportStatus.ManagerReview,
-        isCurrent: status === ReportStatus.ManagerReview,
-        isAvailable: status >= ReportStatus.Submitted
-      },
-      {
-        status: ReportStatus.ManagerApproved,
-        label: 'Manager Approved',
-        icon: 'check_circle',
-        description: 'Line Manager has approved the report and added their signature',
-        isCompleted: status > ReportStatus.ManagerApproved,
-        isCurrent: status === ReportStatus.ManagerApproved,
-        isAvailable: status >= ReportStatus.ManagerReview
-      },
-      {
-        status: ReportStatus.ExecutiveReview,
-        label: 'Executive Review',
-        icon: 'supervisor_account',
-        description: 'Executive is conducting final review before completion',
-        isCompleted: status > ReportStatus.ExecutiveReview,
-        isCurrent: status === ReportStatus.ExecutiveReview,
-        isAvailable: status >= ReportStatus.ManagerApproved
-      },
-      {
-        status: ReportStatus.Completed,
-        label: 'Completed',
-        icon: 'verified',
-        description: 'Report is fully approved and ready for use',
-        isCompleted: status === ReportStatus.Completed,
-        isCurrent: status === ReportStatus.Completed,
-        isAvailable: status >= ReportStatus.ExecutiveReview
       }
     ];
+
+    // Only add Manager Review steps if NOT created by a manager
+    if (!isCreatedByManager) {
+      steps.push(
+        {
+          status: ReportStatus.ManagerReview,
+          label: 'Manager Review',
+          icon: 'rate_review',
+          description: 'Line Manager is reviewing the report content and quality',
+          isCompleted: status > ReportStatus.ManagerReview,
+          isCurrent: status === ReportStatus.ManagerReview,
+          isAvailable: status >= ReportStatus.Submitted
+        },
+        {
+          status: ReportStatus.ManagerApproved,
+          label: 'Manager Approved',
+          icon: 'check_circle',
+          description: 'Line Manager has approved the report and added their signature',
+          isCompleted: status > ReportStatus.ManagerApproved,
+          isCurrent: status === ReportStatus.ManagerApproved,
+          isAvailable: status >= ReportStatus.ManagerReview
+        }
+      );
+    }
+
+    // Add Executive Review step
+    steps.push({
+      status: ReportStatus.ExecutiveReview,
+      label: 'Executive Review',
+      icon: 'supervisor_account',
+      description: 'Executive is conducting final review before completion',
+      isCompleted: status > ReportStatus.ExecutiveReview,
+      isCurrent: status === ReportStatus.ExecutiveReview,
+      isAvailable: isCreatedByManager ? 
+        status >= ReportStatus.Submitted : 
+        status >= ReportStatus.ManagerApproved
+    });
+
+    // Add Completed step
+    steps.push({
+      status: ReportStatus.Completed,
+      label: 'Completed',
+      icon: 'verified',
+      description: 'Report is fully approved and ready for use',
+      isCompleted: status === ReportStatus.Completed,
+      isCurrent: status === ReportStatus.Completed,
+      isAvailable: status >= ReportStatus.ExecutiveReview
+    });
 
     // Handle rejected status
     if (status === ReportStatus.Rejected) {

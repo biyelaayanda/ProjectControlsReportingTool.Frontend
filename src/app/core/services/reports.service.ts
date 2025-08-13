@@ -11,6 +11,7 @@ export interface Report {
   status: ReportStatus;
   department: Department;
   creatorName: string;
+  creatorRole: number; // UserRole enum value
   createdDate: Date;
   dueDate?: Date;
   lastModified: Date;
