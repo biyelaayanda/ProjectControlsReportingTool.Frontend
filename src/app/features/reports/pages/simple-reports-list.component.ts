@@ -650,13 +650,10 @@ export class ReportsListComponent implements OnInit {
         const isOwnReport = report.creatorName === userFullName;
         
         if (this.isReviewPage()) {
-          // On REVIEW page: Only show reports from department members that need manager approval
-          const needsManagerApproval = report.department === user.department && 
-            report.creatorName !== userFullName && // NOT their own reports
-            report.status === ReportStatus.Submitted; // Only submitted reports needing approval
-          
-          console.log(`Debug - Review Page - Report "${report.title}" (${report.status}) - Include: ${needsManagerApproval} (dept: ${report.department}, needsApproval: ${report.status === ReportStatus.Submitted}, notOwn: ${report.creatorName !== userFullName})`);
-          return needsManagerApproval;
+          // On REVIEW page: Backend already filters correctly with signature-based logic
+          // Trust the backend filtering - it shows reports that need attention AND previously reviewed reports
+          console.log(`Debug - Review Page - Report "${report.title}" (${report.status}) - Include: true (backend filtered)`);
+          return true; // Backend already filtered appropriately
         } else {
           // On DASHBOARD/MAIN page: Show ONLY their own reports (manager's personal reports)
           console.log(`Debug - Dashboard - Report "${report.title}" (${report.status}) - Include: ${isOwnReport} (own: ${isOwnReport})`);
