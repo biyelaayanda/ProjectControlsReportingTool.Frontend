@@ -166,15 +166,15 @@ export class ReportsService {
   /**
    * Approve a report (for managers/executives)
    */
-  approveReport(id: string, comments?: string): Observable<Report> {
-    return this.http.post<Report>(`${this.apiUrl}/${id}/approve`, { comments });
+  approveReport(id: string, comments?: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/approve`, { comments });
   }
 
   /**
    * Reject a report (for managers/executives)
    */
-  rejectReport(id: string, reason: string): Observable<Report> {
-    return this.http.post<Report>(`${this.apiUrl}/${id}/reject`, { reason });
+  rejectReport(id: string, reason: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/reject`, { reason });
   }
 
   /**

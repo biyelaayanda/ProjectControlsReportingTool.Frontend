@@ -1124,8 +1124,9 @@ export class ReportDetailsComponent implements OnInit {
         this.isSaving.set(true);
         
         this.reportsService.approveReport(report.id, result.inputValue).subscribe({
-          next: (updatedReport) => {
-            this.report.set(updatedReport);
+          next: (response) => {
+            // Reload the report to get updated status
+            this.loadReport(report.id);
             this.isSaving.set(false);
             this.snackBar.open(
               'Report approved successfully!',
@@ -1174,8 +1175,9 @@ export class ReportDetailsComponent implements OnInit {
         this.isSaving.set(true);
         
         this.reportsService.rejectReport(report.id, result.inputValue).subscribe({
-          next: (updatedReport) => {
-            this.report.set(updatedReport);
+          next: (response) => {
+            // Reload the report to get updated status
+            this.loadReport(report.id);
             this.isSaving.set(false);
             this.snackBar.open(
               'Report rejected successfully!',

@@ -1022,18 +1022,14 @@ export class ReportsListComponent implements OnInit {
     dialogRef.afterClosed().subscribe((result: ReviewReportDialogResult) => {
       if (result && result.action === 'approve') {
         this.reportsService.approveReport(id, result.comments).subscribe({
-          next: (updatedReport) => {
+          next: (response) => {
             this.snackBar.open(
-              `Report "${updatedReport.title}" approved successfully!`,
+              `Report approved successfully!`,
               'Close',
               { duration: 5000, panelClass: ['success-snackbar'] }
             );
-            // Update the report in the local list
-            const currentReports = this.reports();
-            const updatedReports = currentReports.map(r => 
-              r.id === id ? updatedReport : r
-            );
-            this.reports.set(updatedReports);
+            // Refresh the reports list to reflect the approval
+            this.loadReports();
           },
           error: (error) => {
             console.error('Error approving report:', error);
@@ -1066,18 +1062,14 @@ export class ReportsListComponent implements OnInit {
     dialogRef.afterClosed().subscribe((result: ReviewReportDialogResult) => {
       if (result && result.action === 'reject') {
         this.reportsService.rejectReport(id, result.comments).subscribe({
-          next: (updatedReport) => {
+          next: (response) => {
             this.snackBar.open(
-              `Report "${updatedReport.title}" rejected successfully!`,
+              `Report rejected successfully!`,
               'Close',
               { duration: 5000, panelClass: ['success-snackbar'] }
             );
-            // Update the report in the local list
-            const currentReports = this.reports();
-            const updatedReports = currentReports.map(r => 
-              r.id === id ? updatedReport : r
-            );
-            this.reports.set(updatedReports);
+            // Refresh the reports list to reflect the rejection
+            this.loadReports();
           },
           error: (error) => {
             console.error('Error rejecting report:', error);
