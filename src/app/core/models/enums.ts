@@ -20,7 +20,9 @@ export enum ReportStatus {
   ManagerApproved = 4,
   ExecutiveReview = 5,
   Completed = 6,
-  Rejected = 7
+  Rejected = 7,          // Generic rejection (for backward compatibility)
+  ManagerRejected = 8,   // Specifically rejected by Line Manager
+  ExecutiveRejected = 9  // Specifically rejected by Executive
 }
 
 export enum SignatureType {

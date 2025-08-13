@@ -845,6 +845,8 @@ export class ReportsListComponent implements OnInit {
       case ReportStatus.ExecutiveReview: return 'Executive Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
+      case ReportStatus.ManagerRejected: return 'Rejected by Manager';
+      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
       default: return 'Unknown Status';
     }
   }

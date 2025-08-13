@@ -1250,6 +1250,8 @@ export class ReportDetailsComponent implements OnInit {
       case ReportStatus.ExecutiveReview: return 'Executive Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
+      case ReportStatus.ManagerRejected: return 'Rejected by Manager';
+      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
       default: return 'Unknown';
     }
   }
@@ -1267,6 +1269,8 @@ export class ReportDetailsComponent implements OnInit {
       case ReportStatus.ExecutiveReview: return 'supervisor_account';
       case ReportStatus.Completed: return 'verified';
       case ReportStatus.Rejected: return 'cancel';
+      case ReportStatus.ManagerRejected: return 'cancel';
+      case ReportStatus.ExecutiveRejected: return 'cancel';
       default: return 'help';
     }
   }

@@ -417,8 +417,8 @@ export class WorkflowTrackerComponent {
       isAvailable: status >= ReportStatus.ExecutiveReview
     });
 
-    // Handle rejected status
-    if (status === ReportStatus.Rejected) {
+    // Handle rejected statuses
+    if (status === ReportStatus.Rejected || status === ReportStatus.ManagerRejected || status === ReportStatus.ExecutiveRejected) {
       steps.forEach(step => {
         step.isCompleted = false;
         step.isCurrent = false;
@@ -430,9 +430,19 @@ export class WorkflowTrackerComponent {
       const lastStep = steps[steps.length - 1];
       lastStep.isRejected = true;
       lastStep.isAvailable = true;
-      lastStep.label = 'Rejected';
       lastStep.icon = 'cancel';
-      lastStep.description = 'Report was rejected and needs revision';
+      
+      // Set specific rejection labels and descriptions
+      if (status === ReportStatus.ManagerRejected) {
+        lastStep.label = 'Rejected by Manager';
+        lastStep.description = 'Report was rejected by Line Manager and needs revision';
+      } else if (status === ReportStatus.ExecutiveRejected) {
+        lastStep.label = 'Rejected by Executive';
+        lastStep.description = 'Report was rejected by Executive and needs revision';
+      } else {
+        lastStep.label = 'Rejected';
+        lastStep.description = 'Report was rejected and needs revision';
+      }
     }
 
     return steps;
@@ -456,6 +466,8 @@ export class WorkflowTrackerComponent {
       case ReportStatus.ExecutiveReview: return 'Under Executive Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
+      case ReportStatus.ManagerRejected: return 'Rejected by Manager';
+      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
       default: return 'Unknown Status';
     }
   }
@@ -477,6 +489,10 @@ export class WorkflowTrackerComponent {
         return 'The report has been fully approved and is now complete. It can be downloaded and used.';
       case ReportStatus.Rejected:
         return 'The report has been rejected and returned for revision. Please check the feedback and resubmit.';
+      case ReportStatus.ManagerRejected:
+        return 'The Line Manager has rejected this report and returned it for revision. Please review the feedback, make necessary changes, and resubmit.';
+      case ReportStatus.ExecutiveRejected:
+        return 'The Executive has rejected this report and returned it for revision. Please review the feedback, make necessary changes, and resubmit through your Line Manager.';
       default:
         return 'Report status is unknown.';
     }
