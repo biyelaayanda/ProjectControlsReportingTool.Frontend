@@ -75,31 +75,72 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     {{ report()?.priority || 'Medium' }} Priority
                   </mat-chip>
                 </div>
+                
+                <!-- Quick Report Details - Always Visible -->
+                <div class="quick-details">
+                  <div class="quick-detail-item">
+                    <span class="quick-label">Type:</span>
+                    <span class="quick-value">{{ report()?.type || 'Not specified' }}</span>
+                  </div>
+                  <div class="quick-detail-item">
+                    <span class="quick-label">Department:</span>
+                    <span class="quick-value">{{ getDepartmentDisplay(report()?.department!) }}</span>
+                  </div>
+                  <div class="quick-detail-item">
+                    <span class="quick-label">Created by:</span>
+                    <span class="quick-value">{{ report()?.creatorName }}</span>
+                  </div>
+                  <div class="quick-detail-item">
+                    <span class="quick-label">Created:</span>
+                    <span class="quick-value">{{ report()?.createdDate | date:'medium' }}</span>
+                  </div>
+                  @if (report()?.dueDate) {
+                    <div class="quick-detail-item">
+                      <span class="quick-label">Due Date:</span>
+                      <span class="quick-value" [class]="getDueDateClass(report()?.dueDate!)">
+                        {{ report()?.dueDate | date:'medium' }}
+                      </span>
+                    </div>
+                  }
+                  @if (report()?.description) {
+                    <div class="quick-detail-item full-width">
+                      <span class="quick-label">Description:</span>
+                      <span class="quick-value description">{{ report()?.description }}</span>
+                    </div>
+                  }
+                </div>
               </div>
             </div>
             <div class="header-actions">
-              @if (canEdit()) {
-                <button mat-raised-button color="primary" (click)="toggleEditMode()" [disabled]="isSaving()">
-                  @if (isEditMode()) {
-                    <ng-container>
-                      <mat-icon>cancel</mat-icon>
-                      Cancel Editing
-                    </ng-container>
-                  } @else {
-                    <ng-container>
-                      <mat-icon>edit</mat-icon>
-                      Edit Report
-                    </ng-container>
-                  }
-                </button>
+              @if (canView()) {
+                @if (canEdit()) {
+                  <button mat-raised-button color="primary" (click)="toggleEditMode()" [disabled]="isSaving()">
+                    @if (isEditMode()) {
+                      <ng-container>
+                        <mat-icon>visibility</mat-icon>
+                        View Mode
+                      </ng-container>
+                    } @else {
+                      <ng-container>
+                        <mat-icon>edit</mat-icon>
+                        Edit Report
+                      </ng-container>
+                    }
+                  </button>
+                } @else {
+                  <div class="view-mode-indicator">
+                    <mat-icon>visibility</mat-icon>
+                    <span>View Only</span>
+                  </div>
+                }
               }
-              @if (canSubmit()) {
+              @if (canSubmit() && !isEditMode()) {
                 <button mat-raised-button color="accent" (click)="submitReport()" [disabled]="isSaving()">
                   <mat-icon>send</mat-icon>
                   Submit for Review
                 </button>
               }
-              @if (canApprove()) {
+              @if (canApprove() && !isEditMode()) {
                 <button [matMenuTriggerFor]="actionsMenu" mat-raised-button color="primary">
                   <mat-icon>more_vert</mat-icon>
                   Actions
@@ -119,6 +160,12 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     Download PDF
                   </button>
                 </mat-menu>
+              }
+              @if (!canView()) {
+                <div class="no-access-indicator">
+                  <mat-icon>lock</mat-icon>
+                  <span>No Access</span>
+                </div>
               }
             </div>
           </div>
@@ -202,13 +249,45 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                           </ng-container>
                         }
                       </button>
+                      <button mat-stroked-button (click)="cancelEdit()" [disabled]="isSaving()">
+                        <mat-icon>cancel</mat-icon>
+                        Cancel
+                      </button>
+                      @if (editForm.dirty) {
+                        <span class="unsaved-changes">
+                          <mat-icon>warning</mat-icon>
+                          You have unsaved changes
+                        </span>
+                      }
                     </div>
                   </form>
                 } @else {
+                  <!-- View Mode - Read Only Display -->
                   <div class="details-grid">
+                    <div class="section-header">
+                      <h3>Report Information</h3>
+                      @if (canEdit()) {
+                        <span class="edit-hint">
+                          <mat-icon>info</mat-icon>
+                          Click "Edit Report" to modify this report
+                        </span>
+                      }
+                    </div>
+                    
+                    <div class="detail-row">
+                      <span class="label">Report ID:</span>
+                      <span class="value">{{ report()?.id }}</span>
+                    </div>
                     <div class="detail-row">
                       <span class="label">Report Type:</span>
-                      <span class="value">{{ report()?.type }}</span>
+                      <span class="value">{{ report()?.type || 'Not specified' }}</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="label">Priority:</span>
+                      <span class="value priority" [class]="getPriorityClass(report()?.priority)">
+                        <mat-icon>{{ getPriorityIcon(report()?.priority) }}</mat-icon>
+                        {{ report()?.priority || 'Medium' }} Priority
+                      </span>
                     </div>
                     <div class="detail-row">
                       <span class="label">Department:</span>
@@ -220,31 +299,84 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                     </div>
                     <div class="detail-row">
                       <span class="label">Created Date:</span>
-                      <span class="value">{{ report()?.createdDate | date:'medium' }}</span>
+                      <span class="value">{{ report()?.createdDate | date:'full' }}</span>
                     </div>
                     <div class="detail-row">
                       <span class="label">Last Modified:</span>
-                      <span class="value">{{ report()?.lastModified | date:'medium' }}</span>
+                      <span class="value">{{ report()?.lastModified | date:'full' }}</span>
                     </div>
+                    @if (report()?.reportNumber) {
+                      <div class="detail-row">
+                        <span class="label">Report Number:</span>
+                        <span class="value">{{ report()?.reportNumber }}</span>
+                      </div>
+                    }
+                    @if (report()?.submittedDate) {
+                      <div class="detail-row">
+                        <span class="label">Submitted Date:</span>
+                        <span class="value">{{ report()?.submittedDate | date:'full' }}</span>
+                      </div>
+                    }
+                    @if (report()?.managerApprovedDate) {
+                      <div class="detail-row">
+                        <span class="label">Manager Approved:</span>
+                        <span class="value">{{ report()?.managerApprovedDate | date:'full' }}</span>
+                      </div>
+                    }
+                    @if (report()?.executiveApprovedDate) {
+                      <div class="detail-row">
+                        <span class="label">Executive Approved:</span>
+                        <span class="value">{{ report()?.executiveApprovedDate | date:'full' }}</span>
+                      </div>
+                    }
+                    @if (report()?.completedDate) {
+                      <div class="detail-row">
+                        <span class="label">Completed Date:</span>
+                        <span class="value">{{ report()?.completedDate | date:'full' }}</span>
+                      </div>
+                    }
+                    @if (report()?.rejectedDate) {
+                      <div class="detail-row">
+                        <span class="label">Rejected Date:</span>
+                        <span class="value rejected">
+                          <mat-icon>cancel</mat-icon>
+                          {{ report()?.rejectedDate | date:'full' }}
+                        </span>
+                      </div>
+                    }
                     @if (report()?.dueDate) {
                       <div class="detail-row">
                         <span class="label">Due Date:</span>
                         <span class="value" [class]="getDueDateClass(report()?.dueDate!)">
-                          {{ report()?.dueDate | date:'medium' }}
+                          <mat-icon>event</mat-icon>
+                          {{ report()?.dueDate | date:'full' }}
                         </span>
+                      </div>
+                    }
+                    @if (report()?.rejectionReason) {
+                      <div class="detail-row full-width">
+                        <span class="label">Rejection Reason:</span>
+                        <div class="value rejection-reason">
+                          <mat-icon>warning</mat-icon>
+                          <p>{{ report()?.rejectionReason }}</p>
+                        </div>
                       </div>
                     }
                     @if (report()?.description) {
                       <div class="detail-row full-width">
                         <span class="label">Description:</span>
-                        <p class="value description">{{ report()?.description }}</p>
+                        <div class="value description">
+                          <p>{{ report()?.description }}</p>
+                        </div>
                       </div>
                     }
                     @if (report()?.content) {
                       <div class="detail-row full-width">
                         <span class="label">Content:</span>
                         <div class="value content">
-                          <pre>{{ report()?.content }}</pre>
+                          <div class="content-display">
+                            <pre>{{ report()?.content }}</pre>
+                          </div>
                         </div>
                       </div>
                     }
@@ -287,6 +419,7 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
         </div>
       }
     </div>
+    
   `,
   styles: [`
     .report-details-container {
@@ -344,10 +477,146 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
       flex-wrap: wrap;
     }
 
+    .quick-details {
+      margin-top: 16px;
+      padding: 16px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #1976d2;
+    }
+
+    .quick-detail-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+
+    .quick-detail-item.full-width {
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .quick-detail-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .quick-label {
+      font-weight: 500;
+      color: #666;
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+
+    .quick-value {
+      color: #333;
+      flex: 1;
+    }
+
+    .quick-value.description {
+      line-height: 1.5;
+      color: #555;
+    }
+
+    .due-date-overdue {
+      color: #d32f2f !important;
+      font-weight: 500;
+    }
+
+    .due-date-soon {
+      color: #f57c00 !important;
+      font-weight: 500;
+    }
+
+    .due-date-normal {
+      color: #333;
+    }
+
     .header-actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .view-mode-indicator,
+    .no-access-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .no-access-indicator {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e0e0e0;
+      grid-column: 1 / -1;
+    }
+
+    .section-header h3 {
+      margin: 0;
+      color: #1976d2;
+      font-size: 1.4rem;
+      font-weight: 500;
+    }
+
+    .edit-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #666;
+      font-size: 0.9rem;
+      font-style: italic;
+    }
+
+    .priority {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .value.rejected {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #d32f2f;
+    }
+
+    .rejection-reason {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      background: #ffebee;
+      padding: 12px;
+      border-radius: 4px;
+      border-left: 4px solid #d32f2f;
+    }
+
+    .rejection-reason p {
+      margin: 0;
+      color: #c62828;
+      line-height: 1.6;
+    }
+
+    .content-display {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 4px;
+      padding: 16px;
+      margin-top: 8px;
     }
 
     .content-card {
@@ -378,8 +647,18 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
       display: flex;
       gap: 12px;
       justify-content: flex-end;
+      align-items: center;
       padding-top: 16px;
       border-top: 1px solid #e0e0e0;
+    }
+
+    .unsaved-changes {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #ff9800;
+      font-size: 0.9rem;
+      margin-left: auto;
     }
 
     .details-grid {
@@ -529,6 +808,22 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
       .report-title {
         font-size: 1.5rem;
       }
+
+      .quick-details {
+        margin-top: 12px;
+        padding: 12px;
+      }
+
+      .quick-detail-item {
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 12px;
+      }
+
+      .quick-label {
+        min-width: auto;
+        font-size: 0.9rem;
+      }
     }
   `]
 })
@@ -604,19 +899,68 @@ export class ReportDetailsComponent implements OnInit {
     
     if (!user || !report) return false;
     
-    // Can edit if it's your own report and it's in Draft status
+    // General Staff can edit their own reports in Draft status
     if (user.role === UserRole.GeneralStaff) {
       const userFullName = `${user.firstName} ${user.lastName}`;
       return report.creatorName === userFullName && report.status === ReportStatus.Draft;
     }
     
-    // Line managers can edit reports from their department
+    // Line managers can edit:
+    // 1. Their own reports in Draft or Submitted status
+    // 2. Reports from their department staff in Draft or Submitted status
     if (user.role === UserRole.LineManager) {
-      return report.department === user.department && 
-             (report.status === ReportStatus.Draft || report.status === ReportStatus.Submitted);
+      const userFullName = `${user.firstName} ${user.lastName}`;
+      const isOwnReport = report.creatorName === userFullName;
+      const isDepartmentReport = report.department === user.department;
+      
+      if (isOwnReport) {
+        return report.status === ReportStatus.Draft || report.status === ReportStatus.Submitted;
+      }
+      
+      if (isDepartmentReport) {
+        return report.status === ReportStatus.Draft || report.status === ReportStatus.Submitted;
+      }
     }
     
-    // Executives can edit any report
+    // Executives can edit:
+    // 1. Their own reports in any editable status
+    // 2. Any report in certain statuses for administrative purposes
+    if (user.role === UserRole.Executive) {
+      const userFullName = `${user.firstName} ${user.lastName}`;
+      const isOwnReport = report.creatorName === userFullName;
+      
+      if (isOwnReport) {
+        return report.status === ReportStatus.Draft || 
+               report.status === ReportStatus.Submitted ||
+               report.status === ReportStatus.ManagerApproved;
+      }
+      
+      // Executives can edit reports under review for corrections
+      return report.status === ReportStatus.Submitted || 
+             report.status === ReportStatus.ManagerApproved;
+    }
+    
+    return false;
+  }
+
+  canView(): boolean {
+    const user = this.currentUser();
+    const report = this.report();
+    
+    if (!user || !report) return false;
+    
+    // General Staff can view their own reports
+    if (user.role === UserRole.GeneralStaff) {
+      const userFullName = `${user.firstName} ${user.lastName}`;
+      return report.creatorName === userFullName;
+    }
+    
+    // Line Managers can view reports from their department
+    if (user.role === UserRole.LineManager) {
+      return report.department === user.department;
+    }
+    
+    // Executives can view all reports
     return user.role === UserRole.Executive;
   }
 
@@ -662,6 +1006,12 @@ export class ReportDetailsComponent implements OnInit {
       // Reset form to original values
       this.populateEditForm(this.report()!);
     }
+  }
+
+  cancelEdit() {
+    this.isEditMode.set(false);
+    // Reset form to original values
+    this.populateEditForm(this.report()!);
   }
 
   saveReport() {
@@ -945,9 +1295,16 @@ export class ReportDetailsComponent implements OnInit {
     }
   }
 
-  getDueDateClass(dueDate: Date): string {
+  getDueDateClass(dueDate: Date | string): string {
+    if (!dueDate) return 'due-date-normal';
+    
     const today = new Date();
-    const daysDiff = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const targetDate = typeof dueDate === 'string' ? new Date(dueDate) : dueDate;
+    
+    // Check if the date is valid
+    if (isNaN(targetDate.getTime())) return 'due-date-normal';
+    
+    const daysDiff = Math.ceil((targetDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
     if (daysDiff < 0) return 'due-date-overdue';
     if (daysDiff <= 3) return 'due-date-soon';

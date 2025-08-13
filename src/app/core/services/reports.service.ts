@@ -5,18 +5,32 @@ import { environment } from '../../../environments/environment';
 import { Department, ReportStatus } from '../models/enums';
 
 export interface Report {
-  id: string;  // Changed from number to string to match backend GUID
+  id: string;
   title: string;
   type: string;
   status: ReportStatus;
   department: Department;
-  creatorName: string;  // Changed from createdBy to match backend CreatorName
+  creatorName: string;
   createdDate: Date;
   dueDate?: Date;
   lastModified: Date;
   description?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   content?: any;
+  
+  // Additional workflow and audit properties
+  reportNumber?: string;
+  submittedDate?: Date;
+  managerApprovedDate?: Date;
+  executiveApprovedDate?: Date;
+  completedDate?: Date;
+  rejectedDate?: Date;
+  rejectionReason?: string;
+  rejectedBy?: string;
+  
+  // Computed properties for display
+  statusName?: string;
+  departmentName?: string;
 }
 
 export interface ReportFilter {

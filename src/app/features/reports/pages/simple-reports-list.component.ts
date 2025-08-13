@@ -21,6 +21,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ReportsService, Report } from '../../../core/services/reports.service';
 import { UserRole, Department, ReportStatus } from '../../../core/models/enums';
 import { CreateReportComponent } from '../components/create-report.component';
+import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialogResult } from '../components/review-report-dialog.component';
 
 @Component({
   selector: 'app-reports-list',
@@ -618,6 +619,7 @@ export class ReportsListComponent implements OnInit {
     
     console.log('Debug - All reports:', allReports);
     console.log('Debug - Current user:', user);
+    console.log('Debug - Is review page:', this.isReviewPage());
     
     if (!user) {
       console.log('Debug - No user found');
@@ -666,22 +668,40 @@ export class ReportsListComponent implements OnInit {
       return departmentReports;
     }
 
-    // For Executives: Show all reports that need executive review or completed reports
+    // For Executives: Show ALL reports from ALL departments that need executive attention
     if (this.isExecutive()) {
-      console.log('Debug - User is executive, showing reports needing executive attention');
+      console.log('Debug - User is executive, showing ALL reports needing executive attention from ALL departments');
       
       const executiveReports = allReports.filter(report => {
         const userFullName = `${user.firstName} ${user.lastName}`;
         const isOwnReport = report.creatorName === userFullName;
+        
+        // Reports that need executive review from ALL departments:
+        // Backend already filters appropriately, so we just need to show them
+        // 1. Manager approved reports (from staff → manager → executive workflow)
+        // 2. Line Manager submitted reports (backend filters by creator role)
+        // 3. Reports already in executive review
+        // 4. Completed reports (for historical view)
         const needsExecReview = report.status === ReportStatus.ManagerApproved ||
+          report.status === ReportStatus.Submitted ||  // Backend ensures only LineManager submitted reports
           report.status === ReportStatus.ExecutiveReview ||
           report.status === ReportStatus.Completed;
         
-        // On review page, only show reports that need executive attention (not own reports)
-        return this.isReviewPage() ? needsExecReview : (isOwnReport || needsExecReview);
+        if (this.isReviewPage()) {
+          // On REVIEW page: Show ALL reports from ALL departments that need executive attention
+          // Include both own and other department reports since executive oversees everything
+          const shouldShow = needsExecReview;
+          console.log(`Debug - Executive Review Page - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (needsReview: ${needsExecReview})`);
+          return shouldShow;
+        } else {
+          // On DASHBOARD page: Show own reports plus ALL reports needing attention from ALL departments
+          const shouldShow = isOwnReport || needsExecReview;
+          console.log(`Debug - Executive Dashboard - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (own: ${isOwnReport}, needsReview: ${needsExecReview})`);
+          return shouldShow;
+        }
       });
       
-      console.log('Debug - Filtered executive reports:', executiveReports);
+      console.log('Debug - Filtered executive reports (ALL departments):', executiveReports);
       return executiveReports;
     }
 
@@ -955,9 +975,12 @@ export class ReportsListComponent implements OnInit {
              report.status === ReportStatus.Submitted;
     }
 
-    // Executives can approve manager-approved reports
+    // Executives can approve:
+    // 1. Manager-approved reports (from staff → manager → executive workflow)
+    // 2. Line Manager submitted reports (direct manager → executive workflow)
     if (user.role === UserRole.Executive) {
-      return report.status === ReportStatus.ManagerApproved;
+      return report.status === ReportStatus.ManagerApproved ||
+             report.status === ReportStatus.Submitted;  // Include Line Manager submitted reports
     }
 
     return false;
@@ -973,9 +996,12 @@ export class ReportsListComponent implements OnInit {
              report.status === ReportStatus.Submitted;
     }
 
-    // Executives can reject manager-approved reports
+    // Executives can reject:
+    // 1. Manager-approved reports (from staff → manager → executive workflow)
+    // 2. Line Manager submitted reports (direct manager → executive workflow)
     if (user.role === UserRole.Executive) {
-      return report.status === ReportStatus.ManagerApproved;
+      return report.status === ReportStatus.ManagerApproved ||
+             report.status === ReportStatus.Submitted;  // Include Line Manager submitted reports
     }
 
     return false;
@@ -985,28 +1011,42 @@ export class ReportsListComponent implements OnInit {
     const report = this.reports().find(r => r.id === id);
     if (!report) return;
 
-    // For now, approve without comments - we can add a dialog later
-    this.reportsService.approveReport(id).subscribe({
-      next: (updatedReport) => {
-        this.snackBar.open(
-          `Report "${updatedReport.title}" approved successfully!`,
-          'Close',
-          { duration: 5000, panelClass: ['success-snackbar'] }
-        );
-        // Update the report in the local list
-        const currentReports = this.reports();
-        const updatedReports = currentReports.map(r => 
-          r.id === id ? updatedReport : r
-        );
-        this.reports.set(updatedReports);
-      },
-      error: (error) => {
-        console.error('Error approving report:', error);
-        this.snackBar.open(
-          'Failed to approve report. Please try again.',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
-        );
+    // Open review dialog for approval
+    const dialogRef = this.dialog.open(ReviewReportDialogComponent, {
+      width: '700px',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: {
+        report: report,
+        action: 'approve'
+      } as ReviewReportDialogData
+    });
+
+    dialogRef.afterClosed().subscribe((result: ReviewReportDialogResult) => {
+      if (result && result.action === 'approve') {
+        this.reportsService.approveReport(id, result.comments).subscribe({
+          next: (updatedReport) => {
+            this.snackBar.open(
+              `Report "${updatedReport.title}" approved successfully!`,
+              'Close',
+              { duration: 5000, panelClass: ['success-snackbar'] }
+            );
+            // Update the report in the local list
+            const currentReports = this.reports();
+            const updatedReports = currentReports.map(r => 
+              r.id === id ? updatedReport : r
+            );
+            this.reports.set(updatedReports);
+          },
+          error: (error) => {
+            console.error('Error approving report:', error);
+            this.snackBar.open(
+              'Failed to approve report. Please try again.',
+              'Close',
+              { duration: 5000, panelClass: ['error-snackbar'] }
+            );
+          }
+        });
       }
     });
   }
@@ -1015,28 +1055,42 @@ export class ReportsListComponent implements OnInit {
     const report = this.reports().find(r => r.id === id);
     if (!report) return;
 
-    // For now, reject with generic reason - we can add a dialog later
-    this.reportsService.rejectReport(id, 'Rejected by Line Manager').subscribe({
-      next: (updatedReport) => {
-        this.snackBar.open(
-          `Report "${updatedReport.title}" rejected successfully!`,
-          'Close',
-          { duration: 5000, panelClass: ['success-snackbar'] }
-        );
-        // Update the report in the local list
-        const currentReports = this.reports();
-        const updatedReports = currentReports.map(r => 
-          r.id === id ? updatedReport : r
-        );
-        this.reports.set(updatedReports);
-      },
-      error: (error) => {
-        console.error('Error rejecting report:', error);
-        this.snackBar.open(
-          'Failed to reject report. Please try again.',
-          'Close',
-          { duration: 5000, panelClass: ['error-snackbar'] }
-        );
+    // Open review dialog for rejection
+    const dialogRef = this.dialog.open(ReviewReportDialogComponent, {
+      width: '700px',
+      maxHeight: '90vh',
+      disableClose: true,
+      data: {
+        report: report,
+        action: 'reject'
+      } as ReviewReportDialogData
+    });
+
+    dialogRef.afterClosed().subscribe((result: ReviewReportDialogResult) => {
+      if (result && result.action === 'reject') {
+        this.reportsService.rejectReport(id, result.comments).subscribe({
+          next: (updatedReport) => {
+            this.snackBar.open(
+              `Report "${updatedReport.title}" rejected successfully!`,
+              'Close',
+              { duration: 5000, panelClass: ['success-snackbar'] }
+            );
+            // Update the report in the local list
+            const currentReports = this.reports();
+            const updatedReports = currentReports.map(r => 
+              r.id === id ? updatedReport : r
+            );
+            this.reports.set(updatedReports);
+          },
+          error: (error) => {
+            console.error('Error rejecting report:', error);
+            this.snackBar.open(
+              'Failed to reject report. Please try again.',
+              'Close',
+              { duration: 5000, panelClass: ['error-snackbar'] }
+            );
+          }
+        });
       }
     });
   }
