@@ -14,6 +14,7 @@ export interface WorkflowStep {
   isCompleted: boolean;
   isCurrent: boolean;
   isAvailable: boolean;
+  isRejected?: boolean;
 }
 
 @Component({
@@ -34,6 +35,7 @@ export interface WorkflowStep {
                [class.completed]="step.isCompleted"
                [class.current]="step.isCurrent"
                [class.available]="step.isAvailable"
+               [class.rejected]="step.isRejected"
                [matTooltip]="step.description"
                matTooltipPosition="above">
             
@@ -44,7 +46,12 @@ export interface WorkflowStep {
             <div class="step-content">
               <div class="step-label">{{ step.label }}</div>
               <div class="step-status">
-                @if (step.isCompleted) {
+                @if (step.isRejected) {
+                  <mat-chip class="status-chip rejected">
+                    <mat-icon>cancel</mat-icon>
+                    Rejected
+                  </mat-chip>
+                } @else if (step.isCompleted) {
                   <mat-chip class="status-chip completed">
                     <mat-icon>check</mat-icon>
                     Completed
@@ -145,6 +152,11 @@ export interface WorkflowStep {
       background: #fff3e0;
     }
 
+    .workflow-step.rejected {
+      border-color: #f44336;
+      background: #ffebee;
+    }
+
     .step-icon {
       margin-right: 16px;
       flex-shrink: 0;
@@ -174,6 +186,11 @@ export interface WorkflowStep {
 
     .step-icon mat-icon.available {
       background: #ff9800;
+      color: white;
+    }
+
+    .step-icon mat-icon.rejected {
+      background: #f44336;
       color: white;
     }
 
@@ -216,6 +233,11 @@ export interface WorkflowStep {
 
     .status-chip.unavailable {
       background-color: #9e9e9e !important;
+      color: white !important;
+    }
+
+    .status-chip.rejected {
+      background-color: #f44336 !important;
       color: white !important;
     }
 
@@ -400,14 +422,24 @@ export class WorkflowTrackerComponent {
       steps.forEach(step => {
         step.isCompleted = false;
         step.isCurrent = false;
+        step.isRejected = false;
       });
       steps[0].isCurrent = true; // Back to draft
+      
+      // Mark the last step (Completed) as rejected
+      const lastStep = steps[steps.length - 1];
+      lastStep.isRejected = true;
+      lastStep.isAvailable = true;
+      lastStep.label = 'Rejected';
+      lastStep.icon = 'cancel';
+      lastStep.description = 'Report was rejected and needs revision';
     }
 
     return steps;
   });
 
   getStepIconClass(step: WorkflowStep): string {
+    if (step.isRejected) return 'rejected';
     if (step.isCompleted) return 'completed';
     if (step.isCurrent) return 'current';
     if (step.isAvailable) return 'available';
