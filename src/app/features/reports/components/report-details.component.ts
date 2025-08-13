@@ -955,7 +955,7 @@ export class ReportDetailsComponent implements OnInit {
       return report.creatorName === userFullName;
     }
     
-    // Line Managers can view reports from their department
+    // Line Managers can view reports from their department (all statuses including Completed)
     if (user.role === UserRole.LineManager) {
       return report.department === user.department;
     }
