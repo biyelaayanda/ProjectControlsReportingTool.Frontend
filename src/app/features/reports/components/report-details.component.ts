@@ -23,6 +23,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Department, UserRole, ReportStatus } from '../../../core/models/enums';
 import { ConfirmationDialogComponent, ConfirmationDialogData, ConfirmationDialogResult } from '../../../shared/components/confirmation-dialog.component';
 import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tracker.component';
+import { FileListComponent } from '../../../shared/components/file-list.component';
+import { UploadedFile } from '../../../shared/components/file-upload.component';
 
 @Component({
   selector: 'app-report-details',
@@ -46,7 +48,8 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
     MatProgressSpinnerModule,
     MatMenuModule,
     MatDividerModule,
-    WorkflowTrackerComponent
+    WorkflowTrackerComponent,
+    FileListComponent
   ],
   template: `
     <div class="report-details-container">
@@ -402,6 +405,37 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
                   <div class="loading-container">
                     <mat-spinner diameter="30"></mat-spinner>
                     <p>Loading workflow information...</p>
+                  </div>
+                }
+              </div>
+            </mat-tab>
+
+            <!-- Attachments Tab -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon>attach_file</mat-icon>
+                Attachments
+                @if (report()?.attachments && report()!.attachments!.length > 0) {
+                  <span class="tab-badge">{{ report()!.attachments!.length }}</span>
+                }
+              </ng-template>
+              <div class="tab-content">
+                @if (report()?.attachments && report()!.attachments!.length > 0) {
+                  <div class="attachments-section">
+                    <h3>Report Attachments</h3>
+                    <p class="attachments-description">
+                      The following files were attached to this report by {{ report()!.creatorName }}:
+                    </p>
+                    <app-file-list
+                      [files]="getAttachmentsAsUploadedFiles()"
+                      [showActions]="false">
+                    </app-file-list>
+                  </div>
+                } @else {
+                  <div class="no-attachments">
+                    <mat-icon>attach_file</mat-icon>
+                    <h3>No Attachments</h3>
+                    <p>This report has no attached files.</p>
                   </div>
                 }
               </div>
@@ -825,6 +859,57 @@ import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tr
         min-width: auto;
         font-size: 0.9rem;
       }
+    }
+
+    /* Attachments Section */
+    .attachments-section {
+      padding: 20px 0;
+    }
+
+    .attachments-section h3 {
+      margin: 0 0 8px 0;
+      color: #1976d2;
+      font-weight: 500;
+    }
+
+    .attachments-description {
+      margin: 0 0 16px 0;
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .no-attachments {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      color: #666;
+    }
+
+    .no-attachments mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .no-attachments h3 {
+      margin: 0 0 8px 0;
+      font-weight: 500;
+    }
+
+    .tab-badge {
+      background: #1976d2;
+      color: white;
+      border-radius: 10px;
+      padding: 2px 6px;
+      font-size: 0.7rem;
+      margin-left: 8px;
+      min-width: 16px;
+      text-align: center;
     }
   `]
 })
@@ -1322,5 +1407,39 @@ export class ReportDetailsComponent implements OnInit {
     const currentStatus = this.report()?.status;
     if (!currentStatus) return false;
     return currentStatus >= statusLevel;
+  }
+
+  getAttachmentsAsUploadedFiles(): UploadedFile[] {
+    const attachments = this.report()?.attachments || [];
+    return attachments.map(attachment => ({
+      id: attachment.id,
+      name: attachment.originalFileName,
+      size: attachment.fileSize,
+      type: attachment.mimeType || this.inferMimeTypeFromFilename(attachment.originalFileName),
+      url: `/api/reports/${this.report()?.id}/attachments/${attachment.id}/download`,
+      isUploading: false,
+      uploadProgress: 100
+    }));
+  }
+
+  private inferMimeTypeFromFilename(filename: string): string {
+    if (!filename) return 'application/octet-stream';
+    
+    const extension = filename.toLowerCase().split('.').pop();
+    switch (extension) {
+      case 'pdf': return 'application/pdf';
+      case 'doc': return 'application/msword';
+      case 'docx': return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      case 'xls': return 'application/vnd.ms-excel';
+      case 'xlsx': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      case 'ppt': return 'application/vnd.ms-powerpoint';
+      case 'pptx': return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+      case 'txt': return 'text/plain';
+      case 'jpg': case 'jpeg': return 'image/jpeg';
+      case 'png': return 'image/png';
+      case 'gif': return 'image/gif';
+      case 'webp': return 'image/webp';
+      default: return 'application/octet-stream';
+    }
   }
 }

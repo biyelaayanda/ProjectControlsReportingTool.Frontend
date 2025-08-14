@@ -15,6 +15,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { ReportsService, CreateReportDto } from '../../../core/services/reports.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { FeatureFlagService } from '../../../core/services/feature-flag.service';
+import { FileUploadComponent, UploadedFile } from '../../../shared/components/file-upload.component';
+import { FileListComponent } from '../../../shared/components/file-list.component';
 import { Department, UserRole } from '../../../core/models/enums';
 
 @Component({
@@ -33,7 +36,9 @@ import { Department, UserRole } from '../../../core/models/enums';
     MatFormFieldModule,
     MatIconModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    FileUploadComponent,
+    FileListComponent
   ],
   template: `
     <div class="create-report-dialog">
@@ -145,16 +150,54 @@ import { Department, UserRole } from '../../../core/models/enums';
 
           <!-- Content Section -->
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Initial Content</mat-label>
+            <mat-label>Report Content</mat-label>
             <textarea 
               matInput 
               formControlName="content"
-              placeholder="Enter the initial content for your report. You can expand on this later..."
-              rows="6"
-              maxlength="5000">
+              placeholder="Enter the content for your report. Provide detailed information about the subject matter..."
+              rows="8"
+              maxlength="10000">
             </textarea>
-            <mat-hint>Optional - Add initial report content (maximum 5000 characters)</mat-hint>
+            <mat-hint>Add your report content (maximum 10,000 characters)</mat-hint>
+            <mat-error *ngIf="reportForm.get('content')?.hasError('required')">
+              Report content is required
+            </mat-error>
           </mat-form-field>
+
+          <!-- File Attachments Section -->
+          @if (isFileUploadEnabled()) {
+            <div class="attachments-section full-width">
+              <label class="section-label">
+                <mat-icon>attach_file</mat-icon>
+                Attachments (Optional)
+              </label>
+              
+              <app-file-upload
+                [allowMultiple]="true"
+                [maxFileSize]="maxFileSize"
+                [acceptedTypes]="acceptedFileTypes"
+                [acceptedTypesText]="'PDF, Word, Excel, Images (Max 10MB each)'"
+                [dropText]="'Drag & drop supporting documents here'"
+                [disabled]="isSubmitting()"
+                (filesChange)="onFilesChange($event)"
+                (fileUploaded)="onFileUploaded($event)"
+                (uploadError)="onFileUploadError($event)">
+              </app-file-upload>
+
+              @if (attachedFiles().length > 0) {
+                <div class="files-preview">
+                  <app-file-list
+                    [files]="attachedFiles()"
+                    [showActions]="true"
+                    [showSummary]="true"
+                    (fileRemove)="onFileRemove($event)"
+                    (filePreview)="onFilePreview($event)"
+                    (fileDownload)="onFileDownload($event)">
+                  </app-file-list>
+                </div>
+              }
+            </div>
+          }
         </form>
       </mat-dialog-content>
 
@@ -166,7 +209,7 @@ import { Department, UserRole } from '../../../core/models/enums';
           mat-stroked-button 
           color="primary" 
           (click)="onSaveAsDraft()"
-          [disabled]="reportForm.invalid || isSubmitting()">
+          [disabled]="!canSaveAsDraft() || isSubmitting()">
           @if (isSubmitting() && !isSubmittingForReview()) {
             <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
             Saving...
@@ -181,7 +224,7 @@ import { Department, UserRole } from '../../../core/models/enums';
           mat-raised-button 
           color="primary" 
           (click)="onSubmitForReview()"
-          [disabled]="reportForm.invalid || isSubmitting()">
+          [disabled]="!canSubmitForReview() || isSubmitting()">
           @if (isSubmitting() && isSubmittingForReview()) {
             <mat-spinner diameter="20" class="inline-spinner"></mat-spinner>
             Submitting...
@@ -264,17 +307,79 @@ import { Department, UserRole } from '../../../core/models/enums';
       resize: vertical;
       min-height: 60px;
     }
+
+    /* Attachments Section Styles */
+    .attachments-section {
+      border: 1px solid #e3f2fd;
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #f8fbff 0%, #f0f7ff 100%);
+      margin-top: 1rem;
+    }
+
+    .attachments-section .section-title {
+      color: #1976d2;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .attachment-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      color: #856404;
+    }
+
+    .attachment-warning .warning-icon {
+      color: #f39c12;
+      font-size: 1.2rem;
+      margin-top: 0.1rem;
+    }
+
+    .attachment-warning .warning-text {
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+
+    .attachment-warning strong {
+      font-weight: 600;
+    }
+
+    .file-upload-info {
+      font-size: 0.875rem;
+      color: #666;
+      background: rgba(25, 118, 210, 0.05);
+      padding: 0.75rem;
+      border-radius: 4px;
+      border-left: 3px solid #1976d2;
+      margin-bottom: 1rem;
+    }
+
+    .attached-files-list {
+      margin-top: 1rem;
+    }
   `]
 })
 export class CreateReportComponent implements OnInit {
   private fb = inject(FormBuilder);
   private reportsService = inject(ReportsService);
   private authService = inject(AuthService);
+  private featureFlagService = inject(FeatureFlagService);
   private snackBar = inject(MatSnackBar);
   private dialogRef = inject(MatDialogRef<CreateReportComponent>);
 
   isSubmitting = signal(false);
   isSubmittingForReview = signal(false);
+  attachedFiles = signal<UploadedFile[]>([]);
+
+  // File upload configuration
+  readonly maxFileSize = 10 * 1024 * 1024; // 10MB
+  readonly acceptedFileTypes = '.pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp';
   
   // Get current user info as a proper signal
   private currentUser = toSignal(this.authService.currentUser$, { initialValue: null });
@@ -302,6 +407,7 @@ export class CreateReportComponent implements OnInit {
           const defaultDept = user.department || Department.ProjectSupport;
           console.log('Setting department for non-executive to:', defaultDept);
           this.reportForm.get('department')?.setValue(defaultDept);
+          console.log('Department control value after setting:', this.reportForm.get('department')?.value);
         } else {
           console.log('User is executive, keeping current department value');
         }
@@ -393,12 +499,12 @@ export class CreateReportComponent implements OnInit {
 
   onSaveAsDraft(): void {
     console.log('Form submission started (Save as Draft)');
-    console.log('Form valid:', this.reportForm.valid);
+    console.log('Can save as draft:', this.canSaveAsDraft());
     console.log('Form value:', this.reportForm.value);
     console.log('Department control value:', this.reportForm.get('department')?.value);
     console.log('Current user:', this.currentUser());
     
-    if (this.reportForm.valid && !this.isSubmitting()) {
+    if (this.canSaveAsDraft() && !this.isSubmitting()) {
       this.isSubmitting.set(true);
       this.isSubmittingForReview.set(false);
 
@@ -410,15 +516,25 @@ export class CreateReportComponent implements OnInit {
         type: formValue.type || undefined,
         priority: formValue.priority,
         dueDate: formValue.dueDate || undefined,
-        department: formValue.department
+        department: formValue.department || this.currentUser()?.department || Department.ProjectSupport,
+        attachments: this.attachedFiles()
+          .filter(f => f.file != null)
+          .map(f => f.file as File)
       };
 
       console.log('Creating report with data (Draft):', createDto);
 
       this.reportsService.createReport(createDto).subscribe({
         next: (report) => {
+          const hasAttachments = createDto.attachments && createDto.attachments.length > 0;
+          let message = `Report "${report.title}" saved as draft successfully!`;
+          
+          if (hasAttachments) {
+            message += ` ${createDto.attachments?.length} file(s) attached.`;
+          }
+          
           this.snackBar.open(
-            `Report "${report.title}" saved as draft successfully!`,
+            message,
             'Close',
             { duration: 5000, panelClass: ['success-snackbar'] }
           );
@@ -439,10 +555,10 @@ export class CreateReportComponent implements OnInit {
 
   onSubmitForReview(): void {
     console.log('Form submission started (Submit for Review)');
-    console.log('Form valid:', this.reportForm.valid);
+    console.log('Can submit for review:', this.canSubmitForReview());
     console.log('Form value:', this.reportForm.value);
     
-    if (this.reportForm.valid && !this.isSubmitting()) {
+    if (this.canSubmitForReview() && !this.isSubmitting()) {
       this.isSubmitting.set(true);
       this.isSubmittingForReview.set(true);
 
@@ -454,7 +570,10 @@ export class CreateReportComponent implements OnInit {
         type: formValue.type || undefined,
         priority: formValue.priority,
         dueDate: formValue.dueDate || undefined,
-        department: formValue.department
+        department: formValue.department || this.currentUser()?.department || Department.ProjectSupport,
+        attachments: this.attachedFiles()
+          .filter(f => f.file != null)
+          .map(f => f.file as File)
       };
 
       console.log('Creating report with data (Submit for Review):', createDto);
@@ -466,8 +585,15 @@ export class CreateReportComponent implements OnInit {
           // Now submit the created report for review
           this.reportsService.submitReport(report.id).subscribe({
             next: (submittedReport) => {
+              const hasAttachments = createDto.attachments && createDto.attachments.length > 0;
+              let message = `Report "${submittedReport.title}" submitted for Line Manager review successfully!`;
+              
+              if (hasAttachments) {
+                message += ` ${createDto.attachments?.length} file(s) attached.`;
+              }
+              
               this.snackBar.open(
-                `Report "${submittedReport.title}" submitted for Line Manager review successfully!`,
+                message,
                 'Close',
                 { duration: 5000, panelClass: ['success-snackbar'] }
               );
@@ -496,5 +622,68 @@ export class CreateReportComponent implements OnInit {
         }
       });
     }
+  }
+
+  // File Upload Methods
+  isFileUploadEnabled(): boolean {
+    return this.featureFlagService.isAdvancedFileUploadEnabled();
+  }
+
+  onFilesChange(files: UploadedFile[]): void {
+    this.attachedFiles.set(files);
+  }
+
+  onFileUploaded(file: UploadedFile): void {
+    this.snackBar.open(
+      `File "${file.name}" uploaded successfully`,
+      'Close',
+      { duration: 3000, panelClass: ['success-snackbar'] }
+    );
+  }
+
+  onFileUploadError(event: {file: UploadedFile, error: string}): void {
+    this.snackBar.open(
+      `Failed to upload "${event.file.name}": ${event.error}`,
+      'Close',
+      { duration: 5000, panelClass: ['error-snackbar'] }
+    );
+  }
+
+  onFileRemove(file: UploadedFile): void {
+    const currentFiles = this.attachedFiles();
+    const updatedFiles = currentFiles.filter(f => f !== file);
+    this.attachedFiles.set(updatedFiles);
+  }
+
+  onFilePreview(file: UploadedFile): void {
+    // TODO: Implement file preview functionality
+    this.snackBar.open(
+      `Preview for "${file.name}" will be available soon`,
+      'Close',
+      { duration: 2000 }
+    );
+  }
+
+  onFileDownload(file: UploadedFile): void {
+    // TODO: Implement file download functionality
+    this.snackBar.open(
+      `Download for "${file.name}" will be available soon`,
+      'Close',
+      { duration: 2000 }
+    );
+  }
+
+  // Form validation methods
+  canSaveAsDraft(): boolean {
+    // For drafts, only require title and type (basic fields)
+    const titleValid = this.reportForm.get('title')?.valid || false;
+    const typeValid = this.reportForm.get('type')?.valid || false;
+    
+    return titleValid && typeValid;
+  }
+
+  canSubmitForReview(): boolean {
+    // For final submission, require all fields including content
+    return this.reportForm.valid;
   }
 }

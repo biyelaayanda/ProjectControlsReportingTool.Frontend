@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Department, ReportStatus } from '../models/enums';
 
@@ -18,6 +19,7 @@ export interface Report {
   description?: string;
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   content?: any;
+  attachments?: AttachmentInfo[];
   
   // Additional workflow and audit properties
   reportNumber?: string;
@@ -32,6 +34,16 @@ export interface Report {
   // Computed properties for display
   statusName?: string;
   departmentName?: string;
+}
+
+export interface AttachmentInfo {
+  id: string;
+  fileName: string;
+  originalFileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedDate: Date;
+  uploadedBy: string;
 }
 
 export interface ReportFilter {
@@ -54,6 +66,8 @@ export interface CreateReportDto {
   priority: 'Low' | 'Medium' | 'High' | 'Critical';
   dueDate?: Date;
   department: Department;
+  // File attachments are now supported by the backend!
+  attachments?: File[];
 }
 
 export interface UpdateReportDto {
@@ -135,7 +149,42 @@ export class ReportsService {
    * Create a new report
    */
   createReport(reportDto: CreateReportDto): Observable<Report> {
-    return this.http.post<Report>(this.apiUrl, reportDto);
+    // If there are attachments, use FormData for multipart/form-data
+    if (reportDto.attachments && reportDto.attachments.length > 0) {
+      const formData = new FormData();
+      
+      // Add report data (excluding attachments)
+      const reportData = { ...reportDto };
+      delete reportData.attachments;
+      
+      // Add each field separately to FormData
+      formData.append('title', reportData.title);
+      formData.append('content', reportData.content);
+      formData.append('priority', reportData.priority);
+      formData.append('department', (reportData.department || Department.ProjectSupport).toString());
+      
+      if (reportData.description) {
+        formData.append('description', reportData.description);
+      }
+      if (reportData.type) {
+        formData.append('type', reportData.type);
+      }
+      if (reportData.dueDate) {
+        formData.append('dueDate', reportData.dueDate.toISOString());
+      }
+      
+      // Add each file with the key 'attachments'
+      reportDto.attachments.forEach((file) => {
+        formData.append('attachments', file, file.name);
+      });
+      
+      return this.http.post<Report>(this.apiUrl, formData);
+    } else {
+      // No attachments, use regular JSON POST
+      const reportData = { ...reportDto };
+      delete reportData.attachments;
+      return this.http.post<Report>(this.apiUrl, reportData);
+    }
   }
 
   /**
