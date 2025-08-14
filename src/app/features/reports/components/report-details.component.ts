@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +26,7 @@ import { ConfirmationDialogComponent, ConfirmationDialogData, ConfirmationDialog
 import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tracker.component';
 import { FileListComponent } from '../../../shared/components/file-list.component';
 import { UploadedFile } from '../../../shared/components/file-upload.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-report-details',
@@ -428,7 +430,9 @@ import { UploadedFile } from '../../../shared/components/file-upload.component';
                     </p>
                     <app-file-list
                       [files]="getAttachmentsAsUploadedFiles()"
-                      [showActions]="false">
+                      [showActions]="true"
+                      (filePreview)="onFilePreview($event)"
+                      (fileDownload)="onFileDownload($event)">
                     </app-file-list>
                   </div>
                 } @else {
@@ -921,6 +925,7 @@ export class ReportDetailsComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private http = inject(HttpClient);
 
   // Signals
   isLoading = signal(false);
@@ -1441,5 +1446,110 @@ export class ReportDetailsComponent implements OnInit {
       case 'webp': return 'image/webp';
       default: return 'application/octet-stream';
     }
+  }
+
+  onFilePreview(file: UploadedFile): void {
+    if (!file.id || !this.report()?.id) {
+      this.snackBar.open('Unable to preview file - missing file information', 'Close', { 
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    // Check if file type can be previewed
+    if (!this.canPreviewInline(file.type)) {
+      this.snackBar.open(
+        `Preview not available for ${file.type || 'this file type'}. Use download instead.`,
+        'Close',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    const previewUrl = `${environment.apiUrl}/reports/${this.report()?.id}/attachments/${file.id}/preview`;
+    
+    this.snackBar.open('Loading preview...', '', { duration: 1000 });
+
+    // Use HTTP client to fetch with authentication
+    this.http.get(previewUrl, { 
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe({
+      next: (response) => {
+        const blob = response.body;
+        if (blob) {
+          // Create object URL from blob
+          const objectUrl = URL.createObjectURL(blob);
+          // Open in new tab
+          const newWindow = window.open(objectUrl, '_blank');
+          if (!newWindow) {
+            this.snackBar.open('Popup blocked. Please allow popups for this site.', 'Close', { 
+              duration: 3000 
+            });
+          }
+          // Clean up object URL after a delay to allow the browser to load it
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 30000);
+        }
+      },
+      error: (error) => {
+        console.error('Preview error:', error);
+        this.snackBar.open(
+          `Failed to preview file: ${error.status === 401 ? 'Unauthorized' : 'Server error'}`,
+          'Close',
+          { duration: 3000, panelClass: ['error-snackbar'] }
+        );
+      }
+    });
+  }
+
+  onFileDownload(file: UploadedFile): void {
+    if (!file.id || !this.report()?.id) {
+      this.snackBar.open('Unable to download file - missing file information', 'Close', { 
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    const downloadUrl = `${environment.apiUrl}/reports/${this.report()?.id}/attachments/${file.id}/download`;
+    
+    this.snackBar.open(`Downloading "${file.name}"...`, 'Close', { duration: 2000 });
+
+    // Use HTTP client to download with authentication
+    this.http.get(downloadUrl, { 
+      responseType: 'blob',
+      observe: 'response'
+    }).subscribe({
+      next: (response) => {
+        const blob = response.body;
+        if (blob) {
+          // Create object URL from blob and trigger download
+          const objectUrl = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = objectUrl;
+          link.download = file.name;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          // Clean up object URL
+          URL.revokeObjectURL(objectUrl);
+        }
+      },
+      error: (error) => {
+        console.error('Download error:', error);
+        this.snackBar.open(
+          `Failed to download file: ${error.status === 401 ? 'Unauthorized' : 'Server error'}`,
+          'Close',
+          { duration: 3000, panelClass: ['error-snackbar'] }
+        );
+      }
+    });
+  }
+
+  private canPreviewInline(fileType: string): boolean {
+    if (!fileType) return false;
+    const previewableTypes = ['image/', 'application/pdf', 'text/plain'];
+    return previewableTypes.some(type => fileType.startsWith(type));
   }
 }

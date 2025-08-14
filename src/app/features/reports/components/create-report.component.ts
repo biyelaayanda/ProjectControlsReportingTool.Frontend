@@ -656,21 +656,77 @@ export class CreateReportComponent implements OnInit {
   }
 
   onFilePreview(file: UploadedFile): void {
-    // TODO: Implement file preview functionality
-    this.snackBar.open(
-      `Preview for "${file.name}" will be available soon`,
-      'Close',
-      { duration: 2000 }
-    );
+    if (!file.url && !file.id) {
+      this.snackBar.open('File not yet uploaded - preview not available', 'Close', { 
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    // For newly attached files that haven't been saved yet, show a message
+    if (!file.id) {
+      this.snackBar.open(
+        'Please save the report first to preview attachments',
+        'Close',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    // For already saved files with IDs, use the preview URL
+    if (file.url) {
+      const previewUrl = file.url.replace('/download', '/preview');
+      
+      // For images and PDFs, open in a new tab for preview
+      if (this.canPreviewInline(file.type)) {
+        window.open(previewUrl, '_blank');
+      } else {
+        this.snackBar.open(
+          `Preview not available for ${file.type || 'this file type'}. Use download instead.`,
+          'Close',
+          { duration: 3000 }
+        );
+      }
+    }
   }
 
   onFileDownload(file: UploadedFile): void {
-    // TODO: Implement file download functionality
-    this.snackBar.open(
-      `Download for "${file.name}" will be available soon`,
-      'Close',
-      { duration: 2000 }
-    );
+    if (!file.url && !file.id) {
+      this.snackBar.open('File not yet uploaded - download not available', 'Close', { 
+        duration: 3000,
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
+    // For newly attached files that haven't been saved yet, show a message
+    if (!file.id) {
+      this.snackBar.open(
+        'Please save the report first to download attachments',
+        'Close',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    // For already saved files with URLs, trigger download
+    if (file.url) {
+      const link = document.createElement('a');
+      link.href = file.url;
+      link.download = file.name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.snackBar.open(`Downloading "${file.name}"...`, 'Close', { duration: 2000 });
+    }
+  }
+
+  private canPreviewInline(fileType: string): boolean {
+    if (!fileType) return false;
+    const previewableTypes = ['image/', 'application/pdf', 'text/plain'];
+    return previewableTypes.some(type => fileType.startsWith(type));
   }
 
   // Form validation methods
