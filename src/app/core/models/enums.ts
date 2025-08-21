@@ -40,3 +40,9 @@ export enum AuditAction {
   Downloaded = 7,
   Uploaded = 8
 }
+
+export enum ApprovalStage {
+  Initial = 1,           // Uploaded by report creator during initial creation
+  ManagerReview = 2,     // Uploaded by line manager during approval process
+  ExecutiveReview = 3    // Uploaded by executive during approval process
+}

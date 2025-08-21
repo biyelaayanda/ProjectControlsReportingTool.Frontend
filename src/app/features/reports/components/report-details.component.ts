@@ -21,11 +21,13 @@ import { MatDividerModule } from '@angular/material/divider';
 
 import { ReportsService, Report, UpdateReportDto } from '../../../core/services/reports.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Department, UserRole, ReportStatus } from '../../../core/models/enums';
+import { Department, UserRole, ReportStatus, ApprovalStage } from '../../../core/models/enums';
 import { ConfirmationDialogComponent, ConfirmationDialogData, ConfirmationDialogResult } from '../../../shared/components/confirmation-dialog.component';
 import { WorkflowTrackerComponent } from '../../../shared/components/workflow-tracker.component';
 import { FileListComponent } from '../../../shared/components/file-list.component';
 import { UploadedFile } from '../../../shared/components/file-upload.component';
+import { ApprovalDocumentUploadComponent } from '../../../shared/components/approval-document-upload.component';
+import { ApprovalStageDocumentsComponent } from '../../../shared/components/approval-stage-documents.component';
 import { environment } from '../../../../environments/environment';
 
 @Component({
@@ -51,7 +53,9 @@ import { environment } from '../../../../environments/environment';
     MatMenuModule,
     MatDividerModule,
     WorkflowTrackerComponent,
-    FileListComponent
+    FileListComponent,
+    ApprovalDocumentUploadComponent,
+    ApprovalStageDocumentsComponent
   ],
   template: `
     <div class="report-details-container">
@@ -442,6 +446,50 @@ import { environment } from '../../../../environments/environment';
                     <p>This report has no attached files.</p>
                   </div>
                 }
+              </div>
+            </mat-tab>
+
+            <!-- Approval Documents Tab -->
+            <mat-tab>
+              <ng-template mat-tab-label>
+                <mat-icon>folder_shared</mat-icon>
+                Approval Documents
+                @if (hasApprovalDocuments()) {
+                  <span class="tab-badge">{{ getTotalApprovalDocuments() }}</span>
+                }
+              </ng-template>
+              <div class="tab-content">
+                <!-- Temporary: Always show upload section for debugging -->
+                <div class="approval-upload-section">
+                  <h3>Upload Approval Documents</h3>
+                  <p class="section-description">
+                    Upload documents related to the approval process for this report.
+                    <br><small style="color: #666;">
+                      Debug: Status={{ report()?.status }}, UserRole={{ getCurrentUserRole() }}, CanUpload={{ canUploadApprovalDocuments() }}
+                    </small>
+                  </p>
+                  <app-approval-document-upload
+                    [reportId]="report()!.id"
+                    [approvalStage]="getCurrentApprovalStage()"
+                    [userRole]="getCurrentUserRole()"
+                    [canUpload]="canUploadApprovalDocuments()"
+                    (documentsUploaded)="onApprovalDocumentsUploaded($event)">
+                  </app-approval-document-upload>
+                  <mat-divider class="section-divider"></mat-divider>
+                </div>
+                
+                <div class="approval-documents-section">
+                  <h3>Approval Documents by Stage</h3>
+                  <p class="section-description">
+                    View documents uploaded during each stage of the approval process.
+                  </p>
+                  <app-approval-stage-documents
+                    [attachmentsByStage]="getApprovalAttachmentsByStage()"
+                    [userRole]="getCurrentUserRole()"
+                    (filePreview)="onFilePreview($event)"
+                    (fileDownload)="onFileDownload($event)">
+                  </app-approval-stage-documents>
+                </div>
               </div>
             </mat-tab>
           </mat-tab-group>
@@ -914,6 +962,31 @@ import { environment } from '../../../../environments/environment';
       margin-left: 8px;
       min-width: 16px;
       text-align: center;
+    }
+
+    /* Approval Documents Styles */
+    .approval-upload-section {
+      margin-bottom: 24px;
+    }
+
+    .approval-documents-section h3,
+    .approval-upload-section h3 {
+      margin: 0 0 8px 0;
+      color: #1976d2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-description {
+      color: #666;
+      margin: 0 0 16px 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .section-divider {
+      margin: 24px 0;
     }
   `]
 })
@@ -1551,5 +1624,111 @@ export class ReportDetailsComponent implements OnInit {
     if (!fileType) return false;
     const previewableTypes = ['image/', 'application/pdf', 'text/plain'];
     return previewableTypes.some(type => fileType.startsWith(type));
+  }
+
+  // Approval Document Management Methods
+
+  hasApprovalDocuments(): boolean {
+    const attachments = this.report()?.attachments || [];
+    return attachments.some(att => att.approvalStage !== undefined);
+  }
+
+  getTotalApprovalDocuments(): number {
+    const attachments = this.report()?.attachments || [];
+    return attachments.filter(att => att.approvalStage !== undefined).length;
+  }
+
+  canUploadApprovalDocuments(): boolean {
+    const currentUser = this.currentUser();
+    const report = this.report();
+    
+    if (!currentUser || !report) return false;
+
+    // User can upload if they have the permission to approve at the current stage
+    const userRole = this.getCurrentUserRole();
+    const status = report.status;
+
+    // Check if report is in a state where approval documents can be uploaded
+    switch (status) {
+      case ReportStatus.ManagerReview:
+        return userRole === UserRole.LineManager || userRole === UserRole.Executive;
+      case ReportStatus.ExecutiveReview:
+        return userRole === UserRole.Executive;
+      default:
+        return false;
+    }
+  }
+
+  getCurrentApprovalStage(): ApprovalStage {
+    const report = this.report();
+    if (!report) return ApprovalStage.Initial;
+
+    switch (report.status) {
+      case ReportStatus.Draft:
+      case ReportStatus.Submitted:
+        return ApprovalStage.Initial;
+      case ReportStatus.ManagerReview:
+      case ReportStatus.ManagerApproved:
+      case ReportStatus.ManagerRejected:
+        return ApprovalStage.ManagerReview;
+      case ReportStatus.ExecutiveReview:
+      case ReportStatus.ExecutiveRejected:
+      case ReportStatus.Completed:
+        return ApprovalStage.ExecutiveReview;
+      default:
+        return ApprovalStage.Initial;
+    }
+  }
+
+  onApprovalDocumentsUploaded(event: any): void {
+    const uploadedFiles = Array.isArray(event) ? event : (event?.files || []);
+    
+    this.snackBar.open(
+      `Successfully uploaded ${uploadedFiles.length} approval document(s)`,
+      'Close',
+      { duration: 3000, panelClass: ['success-snackbar'] }
+    );
+
+    // Refresh the report to get updated attachments
+    const reportId = this.report()?.id;
+    if (reportId) {
+      this.reportsService.getReport(reportId).subscribe({
+        next: (updatedReport) => {
+          this.report.set(updatedReport);
+        },
+        error: (error) => {
+          console.error('Error refreshing report after upload:', error);
+        }
+      });
+    }
+  }
+
+  getApprovalAttachmentsByStage(): { [key in ApprovalStage]: UploadedFile[] } {
+    const attachments = this.report()?.attachments || [];
+    const result: { [key in ApprovalStage]: UploadedFile[] } = {
+      [ApprovalStage.Initial]: [],
+      [ApprovalStage.ManagerReview]: [],
+      [ApprovalStage.ExecutiveReview]: []
+    };
+
+    attachments.forEach(attachment => {
+      if (attachment.approvalStage !== undefined) {
+        const uploadedFile: UploadedFile = {
+          id: attachment.id,
+          name: attachment.originalFileName,
+          size: attachment.fileSize,
+          type: attachment.mimeType || this.inferMimeTypeFromFilename(attachment.originalFileName),
+          url: `/api/reports/${this.report()?.id}/attachments/${attachment.id}/download`,
+          isUploading: false,
+          uploadProgress: 100,
+          approvalStage: attachment.approvalStage,
+          uploadedByName: attachment.uploadedByName,
+          uploadedDate: attachment.uploadedDate
+        };
+        result[attachment.approvalStage].push(uploadedFile);
+      }
+    });
+
+    return result;
   }
 }

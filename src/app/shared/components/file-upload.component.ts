@@ -7,6 +7,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { ApprovalStage, UserRole } from '../../core/models/enums';
 
 export interface UploadedFile {
   id?: string;
@@ -18,6 +19,13 @@ export interface UploadedFile {
   isUploading?: boolean;
   uploadError?: string;
   file?: File; // Keep reference to original file for form submission
+  // Approval stage information
+  approvalStage?: ApprovalStage;
+  approvalStageName?: string;
+  uploadedByRole?: UserRole;
+  uploadedByRoleName?: string;
+  uploadedByName?: string;
+  uploadedDate?: Date;
 }
 
 @Component({

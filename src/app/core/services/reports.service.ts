@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Department, ReportStatus } from '../models/enums';
+import { Department, ReportStatus, ApprovalStage, UserRole } from '../models/enums';
 
 export interface Report {
   id: string;
@@ -44,6 +44,12 @@ export interface AttachmentInfo {
   mimeType: string;
   uploadedDate: Date;
   uploadedBy: string;
+  uploadedByName: string;
+  approvalStage: ApprovalStage;
+  approvalStageName: string;
+  uploadedByRole: UserRole;
+  uploadedByRoleName: string;
+  isActive: boolean;
 }
 
 export interface ReportFilter {
@@ -347,5 +353,68 @@ export class ReportsService {
     const currentReports = this.reportsSubject.value;
     const filteredReports = currentReports.filter(r => r.id !== reportId);
     this.reportsSubject.next(filteredReports);
+  }
+
+  // Attachment Management Methods
+  
+  /**
+   * Download a report attachment
+   */
+  downloadAttachment(reportId: string, attachmentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${reportId}/attachments/${attachmentId}/download`, { 
+      responseType: 'blob' 
+    });
+  }
+
+  /**
+   * Preview a report attachment
+   */
+  previewAttachment(reportId: string, attachmentId: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${reportId}/attachments/${attachmentId}/preview`, { 
+      responseType: 'blob' 
+    });
+  }
+
+  // Approval Document Management Methods
+
+  /**
+   * Upload documents during approval process
+   */
+  uploadApprovalDocuments(reportId: string, files: File[], description: string = ''): Observable<any> {
+    const formData = new FormData();
+    files.forEach((file, index) => {
+      formData.append(`files`, file);
+    });
+    if (description) {
+      formData.append('description', description);
+    }
+
+    return this.http.post(`${this.apiUrl}/${reportId}/approval-documents`, formData).pipe(
+      tap(() => this.refreshReports())
+    );
+  }
+
+  /**
+   * Get report attachments by approval stage
+   */
+  getReportAttachmentsByStage(reportId: string, stage: ApprovalStage): Observable<AttachmentInfo[]> {
+    const params = new HttpParams().set('stage', stage.toString());
+    return this.http.get<AttachmentInfo[]>(`${this.apiUrl}/${reportId}/attachments/by-stage`, { params });
+  }
+
+  /**
+   * Get all report attachments organized by approval stages
+   */
+  getAllReportAttachmentsByStages(reportId: string): Observable<{ [key in ApprovalStage]: AttachmentInfo[] }> {
+    return this.http.get<{ [key in ApprovalStage]: AttachmentInfo[] }>(`${this.apiUrl}/${reportId}/attachments/by-stages`);
+  }
+
+  /**
+   * Refresh the reports cache
+   */
+  private refreshReports(): void {
+    this.getReports().subscribe(reports => {
+      this.reportsSubject.next(reports.reports);
+    });
   }
 }
