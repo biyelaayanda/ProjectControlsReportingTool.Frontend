@@ -1224,3 +1224,26 @@ USE [master]
 GO
 ALTER DATABASE [ProjectControlsReportingToolDB] SET  READ_WRITE 
 GO
+
+
+Starting Executive to GM migration...
+Step 1: Updating table columns...
+ExecutiveApprovedDate column not found - skipping rename
+Step 2: Updating stored procedures...
+Msg 207, Level 16, State 1, Procedure GetPendingApprovalsForGM, Line 61 [Batch Start Line 42]
+Invalid column name 'CreatedBy'.
+Msg 207, Level 16, State 1, Procedure GetPendingApprovalsForGM, Line 56 [Batch Start Line 42]
+Invalid column name 'CreatedBy'.
+Msg 207, Level 16, State 1, Procedure ApproveReport, Line 28 [Batch Start Line 148]
+Invalid column name 'LastModifiedBy'.
+Msg 207, Level 16, State 1, Procedure RejectReport, Line 32 [Batch Start Line 213]
+Invalid column name 'LastModifiedBy'.
+Msg 207, Level 16, State 1, Procedure CanUserAccessReport, Line 29 [Batch Start Line 266]
+Invalid column name 'CreatedBy'.
+Step 3: Verification...
+SUCCESS: GMApprovedDate column exists
+Executive to GM migration completed successfully!
+All procedures have been updated to use GM role (3) instead of Executive
+Column ExecutiveApprovedDate has been renamed to GMApprovedDate
+
+Completion time: 2025-08-30T22:35:54.7749988+02:00
