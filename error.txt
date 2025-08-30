@@ -13,3 +13,81 @@ Object { title: "Reject By GM", content: "Need to be rejected by GM", descriptio
 create-report.component.ts:579:15
 Error creating report: 
 Object { headers: {…}, status: 400, statusText: "Bad Request", url: "http://localhost:5039/api/reports", ok: false, type: undefined, name: "HttpErrorResponse", message: "Http failure response for http://localhost:5039/api/reports: 400 Bad Request", error: {…} }
+
+
+Reject 
+
+Debug - Current user: 
+Object { id: "a26d47d7-c253-45df-9d55-2ebc41ab78aa", email: "biyelaa@gmail.com", firstName: "Ayanda", lastName: "Biyela", fullName: "Ayanda Biyela", role: 3, roleName: "GM", department: 2, departmentName: "Document Management", isActive: true, … }
+simple-reports-list.component.ts:621:13
+Debug - Is review page: false simple-reports-list.component.ts:622:13
+Debug - User is GM, showing ALL reports needing GM attention from ALL departments simple-reports-list.component.ts:670:15
+Debug - GM Dashboard - Report "Zeus'S Report 1" (4, dept: 3) - Include: true (own: false, needsReview: true) simple-reports-list.component.ts:696:19
+Debug - GM Dashboard - Report "Testing File Upload 2" (6, dept: 3) - Include: true (own: false, needsReview: true) simple-reports-list.component.ts:696:19
+Debug - GM Dashboard - Report "21/08/2025" (6, dept: 3) - Include: true (own: false, needsReview: true) simple-reports-list.component.ts:696:19
+Debug - GM Dashboard - Report "July 2025 CAPEX" (1, dept: 2) - Include: true (own: true, needsReview: false) simple-reports-list.component.ts:696:19
+Debug - Filtered GM reports (ALL departments): 
+Array(4) [ {…}, {…}, {…}, {…} ]
+simple-reports-list.component.ts:701:15
+XHRPOST
+http://localhost:5039/api/reports/9c69e9aa-e5fc-4c68-9b28-f83574a29574/reject
+[HTTP/1.1 400 Bad Request 143ms]
+
+Error rejecting report: 
+Object { headers: {…}, status: 400, statusText: "Bad Request", url: "http://localhost:5039/api/reports/9c69e9aa-e5fc-4c68-9b28-f83574a29574/reject", ok: false, type: undefined, name: "HttpErrorResponse", message: "Http failure response for http://localhost:5039/api/reports/9c69e9aa-e5fc-4c68-9b28-f83574a29574/reject: 400 Bad Request", error: "Failed to reject report" }
+
+
+
+USE [ProjectControlsReportingToolDB]
+GO
+/****** Object:  StoredProcedure [dbo].[GetReportDetails]    Script Date: 2025/08/30 23:01:02 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- =============================================
+-- SP: GetReportDetails
+-- Description: Gets detailed report information
+-- =============================================
+ALTER   PROCEDURE [dbo].[GetReportDetails]
+    @ReportId UNIQUEIDENTIFIER
+AS
+BEGIN
+    SET NOCOUNT ON;
+    
+    -- Get report details
+    SELECT 
+        r.Id, r.Title, r.Content, r.Description, r.Status, r.Department,
+        r.CreatedDate, r.LastModifiedDate, r.SubmittedDate,
+        r.ManagerApprovedDate, r.GMApprovedDate, r.CompletedDate,
+        r.RejectionReason, r.RejectedDate, r.ReportNumber,
+        creator.FirstName + ' ' + creator.LastName AS CreatedByName,
+        rejector.FirstName + ' ' + rejector.LastName AS RejectedByName
+    FROM Reports r
+    INNER JOIN Users creator ON r.CreatedBy = creator.Id
+    LEFT JOIN Users rejector ON r.RejectedBy = rejector.Id
+    WHERE r.Id = @ReportId;
+    
+    -- Get signatures
+    SELECT 
+        rs.Id, rs.ReportId, rs.UserId, rs.SignatureType,
+        rs.SignedDate, rs.Comments, rs.IsActive,
+        u.FirstName + ' ' + u.LastName AS UserName
+    FROM ReportSignatures rs
+    INNER JOIN Users u ON rs.UserId = u.Id
+    WHERE rs.ReportId = @ReportId
+    AND rs.IsActive = 1
+    ORDER BY rs.SignedDate DESC;
+    
+    -- Get attachments
+    SELECT 
+        ra.Id, ra.ReportId, ra.FileName, ra.OriginalFileName,
+        ra.ContentType, ra.FileSize, ra.UploadedDate, ra.Description,
+        u.FirstName + ' ' + u.LastName AS UploadedByName
+    FROM ReportAttachments ra
+    INNER JOIN Users u ON ra.UploadedBy = u.Id
+    WHERE ra.ReportId = @ReportId
+    AND ra.IsActive = 1
+    ORDER BY ra.UploadedDate DESC;
+END
