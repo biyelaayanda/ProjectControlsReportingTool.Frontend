@@ -440,7 +440,6 @@ export class ProfileComponent implements OnInit {
         },
         error: (error: any) => {
           this.isUpdatingProfile = false;
-          console.error('Profile update error:', error);
           this.snackBar.open('An error occurred. Please try again.', 'Close', {
             duration: 5000,
             panelClass: ['error-snackbar']
@@ -470,7 +469,6 @@ export class ProfileComponent implements OnInit {
         },
         error: (error: any) => {
           this.isChangingPassword = false;
-          console.error('Password change error:', error);
           this.snackBar.open('An error occurred. Please try again.', 'Close', {
             duration: 5000,
             panelClass: ['error-snackbar']

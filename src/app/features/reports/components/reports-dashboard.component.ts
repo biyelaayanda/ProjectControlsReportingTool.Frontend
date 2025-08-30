@@ -390,6 +390,5 @@ export class ReportsDashboardComponent implements OnInit {
 
   generateReport() {
     // TODO: Implement analytics/reporting functionality
-    console.log('Generate analytics report');
   }
 }

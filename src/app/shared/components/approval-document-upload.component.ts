@@ -214,7 +214,6 @@ export class ApprovalDocumentUploadComponent {
       this.documentsUploaded.emit();
 
     } catch (error: any) {
-      console.error('Upload error:', error);
       this.snackBar.open(
         `Upload failed: ${error.error?.message || 'Unknown error'}`,
         'Close',

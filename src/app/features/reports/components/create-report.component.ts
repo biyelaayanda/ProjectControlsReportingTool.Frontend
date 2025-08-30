@@ -422,22 +422,15 @@ export class CreateReportComponent implements OnInit {
     // Effect to handle user loading and update form accordingly
     effect(() => {
       const user = this.currentUser();
-      console.log('Effect triggered - User:', user);
       if (user) {
         // Update department to user's department if not a GM
         if (user.role !== UserRole.GM) {
           const defaultDept = user.department || Department.ProjectSupport;
-          console.log('Setting department for non-GM to:', defaultDept);
           this.reportForm.get('department')?.setValue(defaultDept);
-          console.log('Department control value after setting:', this.reportForm.get('department')?.value);
-        } else {
-          console.log('User is GM, keeping current department value');
         }
         
         // Update department control state
         this.updateDepartmentControlState();
-      } else {
-        console.log('No user loaded yet');
       }
     });
   }
@@ -520,12 +513,6 @@ export class CreateReportComponent implements OnInit {
   }
 
   onSaveAsDraft(): void {
-    console.log('Form submission started (Save as Draft)');
-    console.log('Can save as draft:', this.canSaveAsDraft());
-    console.log('Form value:', this.reportForm.value);
-    console.log('Department control value:', this.reportForm.get('department')?.value);
-    console.log('Current user:', this.currentUser());
-    
     if (this.canSaveAsDraft() && !this.isSubmitting()) {
       this.isSubmitting.set(true);
       this.isSubmittingForReview.set(false);
@@ -544,8 +531,6 @@ export class CreateReportComponent implements OnInit {
           .map(f => f.file as File)
       };
 
-      console.log('Creating report with data (Draft):', createDto);
-
       this.reportsService.createReport(createDto).subscribe({
         next: (report) => {
           const hasAttachments = createDto.attachments && createDto.attachments.length > 0;
@@ -563,8 +548,6 @@ export class CreateReportComponent implements OnInit {
           this.dialogRef.close(report);
         },
         error: (error) => {
-          console.error('Error creating report:', error);
-          
           let errorMessage = 'Failed to save report. Please try again.';
           
           // Provide more specific error messages based on the error
@@ -596,10 +579,6 @@ export class CreateReportComponent implements OnInit {
   }
 
   onSubmitForReview(): void {
-    console.log('Form submission started (Submit for Review)');
-    console.log('Can submit for review:', this.canSubmitForReview());
-    console.log('Form value:', this.reportForm.value);
-    
     if (this.canSubmitForReview() && !this.isSubmitting()) {
       this.isSubmitting.set(true);
       this.isSubmittingForReview.set(true);
@@ -618,12 +597,9 @@ export class CreateReportComponent implements OnInit {
           .map(f => f.file as File)
       };
 
-      console.log('Creating report with data (Submit for Review):', createDto);
-
       // First create the report as draft, then submit it
       this.reportsService.createReport(createDto).subscribe({
         next: (report) => {
-          console.log('Report created, now submitting for review...');
           // Now submit the created report for review
           this.reportsService.submitReport(report.id).subscribe({
             next: (submittedReport) => {
@@ -642,7 +618,6 @@ export class CreateReportComponent implements OnInit {
               this.dialogRef.close(submittedReport);
             },
             error: (error) => {
-              console.error('Error submitting report for review:', error);
               this.snackBar.open(
                 'Report created but failed to submit for review. You can submit it later from the reports list.',
                 'Close',
@@ -653,8 +628,6 @@ export class CreateReportComponent implements OnInit {
           });
         },
         error: (error) => {
-          console.error('Error creating report:', error);
-          
           let errorMessage = 'Failed to create report. Please try again.';
           
           // Provide more specific error messages based on the error

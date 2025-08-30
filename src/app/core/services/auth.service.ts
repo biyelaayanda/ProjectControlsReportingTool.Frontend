@@ -88,7 +88,6 @@ export class AuthService {
           // This ensures proper workflow and user verification
           if (response.token && response.user && !response.errorMessage) {
             // Registration successful but don't store auth data yet
-            console.log('Registration successful for:', response.user.email);
           }
         }),
         catchError(this.handleError)
@@ -298,8 +297,6 @@ export class AuthService {
    * Handle HTTP errors
    */
   private handleError = (error: any): Observable<never> => {
-    console.error('Auth service error:', error);
-    
     if (error.status === 401) {
       this.clearAuthData();
       this.router.navigate(['/login']);

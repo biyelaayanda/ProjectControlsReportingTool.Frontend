@@ -604,7 +604,6 @@ export class ReportsListComponent implements OnInit {
   // Computed
   currentUser = computed(() => {
     const user = this.currentUserSignal();
-    console.log('Debug - currentUser computed:', user);
     return user;
   });
 
@@ -617,34 +616,23 @@ export class ReportsListComponent implements OnInit {
     const allReports = this.reports();
     const user = this.currentUser();
     
-    console.log('Debug - All reports:', allReports);
-    console.log('Debug - Current user:', user);
-    console.log('Debug - Is review page:', this.isReviewPage());
-    
     if (!user) {
-      console.log('Debug - No user found');
       return [];
     }
 
     // For General Staff: Only show reports they created
     if (this.isGeneralStaff()) {
       const userFullName = `${user.firstName} ${user.lastName}`;
-      console.log('Debug - User is general staff, filtering by creator:', userFullName);
-      
       const userReports = allReports.filter(report => {
         const match = report.creatorName === userFullName;
-        console.log(`Debug - Report "${report.title}" created by "${report.creatorName}", matches user "${userFullName}": ${match}`);
         return match;
       });
       
-      console.log('Debug - Filtered user reports:', userReports);
       return userReports;
     }
 
     // For Line Managers: Show department reports that need their attention
     if (this.isLineManager()) {
-      console.log('Debug - User is line manager, showing department reports needing attention');
-      
       const departmentReports = allReports.filter(report => {
         const userFullName = `${user.firstName} ${user.lastName}`;
         const isOwnReport = report.creatorName === userFullName;
@@ -652,23 +640,18 @@ export class ReportsListComponent implements OnInit {
         if (this.isReviewPage()) {
           // On REVIEW page: Backend already filters correctly with signature-based logic
           // Trust the backend filtering - it shows reports that need attention AND previously reviewed reports
-          console.log(`Debug - Review Page - Report "${report.title}" (${report.status}) - Include: true (backend filtered)`);
           return true; // Backend already filtered appropriately
         } else {
           // On DASHBOARD/MAIN page: Show ONLY their own reports (manager's personal reports)
-          console.log(`Debug - Dashboard - Report "${report.title}" (${report.status}) - Include: ${isOwnReport} (own: ${isOwnReport})`);
           return isOwnReport;
         }
       });
       
-      console.log('Debug - Filtered department reports:', departmentReports);
       return departmentReports;
     }
 
     // For GM: Show ALL reports from ALL departments that need GM attention
     if (this.isGM()) {
-      console.log('Debug - User is GM, showing ALL reports needing GM attention from ALL departments');
-      
       const gmReports = allReports.filter(report => {
         const userFullName = `${user.firstName} ${user.lastName}`;
         const isOwnReport = report.creatorName === userFullName;
@@ -688,22 +671,18 @@ export class ReportsListComponent implements OnInit {
           // On REVIEW page: Show ALL reports from ALL departments that need GM attention
           // Include both own and other department reports since GM oversees everything
           const shouldShow = needsGMReview;
-          console.log(`Debug - GM Review Page - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (needsReview: ${needsGMReview})`);
           return shouldShow;
         } else {
           // On DASHBOARD page: Show own reports plus ALL reports needing attention from ALL departments
           const shouldShow = isOwnReport || needsGMReview;
-          console.log(`Debug - GM Dashboard - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (own: ${isOwnReport}, needsReview: ${needsGMReview})`);
           return shouldShow;
         }
       });
       
-      console.log('Debug - Filtered GM reports (ALL departments):', gmReports);
       return gmReports;
     }
 
     // Fallback: no reports
-    console.log('Debug - Unknown role, showing no reports');
     return [];
   });
 
@@ -725,7 +704,6 @@ export class ReportsListComponent implements OnInit {
   ngOnInit(): void {
     // Subscribe to current user changes
     this.authService.currentUser$.subscribe(user => {
-      console.log('Debug - Auth service user update:', user);
       this.currentUserSignal.set(user);
     });
 
@@ -734,7 +712,6 @@ export class ReportsListComponent implements OnInit {
     // Check current route for review page
     const currentRoute = this.router.url;
     if (currentRoute.includes('/reports/review')) {
-      console.log('Debug - On review page, applying review filters');
       this.isReviewPage.set(true);
       // For review page, we want to show only reports that need attention
       // This is already handled by the filteredReports computed property for Line Managers and GM
@@ -760,47 +737,30 @@ export class ReportsListComponent implements OnInit {
 
   private async loadReports(): Promise<void> {
     this.isLoading.set(true);
-    console.log('Debug - Starting to load reports...');
-    
     try {
       const user = this.currentUser();
       if (!user) {
-        console.error('Debug - No user found');
         return;
       }
-
-      console.log('Debug - User found:', user);
-      console.log('Debug - Calling reportsService.getReports()...');
 
       // Call actual API to get reports
       this.reportsService.getReports().subscribe({
         next: (response) => {
-          console.log('Debug - API response received:', response);
           this.reports.set(response.reports || []);
-          console.log('Debug - Reports set to:', this.reports());
-        },
+          },
         error: (error) => {
-          console.error('Debug - Error loading reports:', error);
-          console.error('Debug - Error details:', {
-            status: error.status,
-            statusText: error.statusText,
-            message: error.message,
-            url: error.url
-          });
           this.reports.set([]);
         }
       });
     } catch (error) {
-      console.error('Debug - Catch error loading reports:', error);
-    } finally {
+      } finally {
       this.isLoading.set(false);
     }
   }
 
   applyFilters(): void {
     // Filtering is handled reactively through computed signal
-    console.log('Filters applied:', this.filtersForm.value);
-  }
+    }
 
   clearFilters(): void {
     this.filtersForm.reset();
@@ -848,12 +808,10 @@ export class ReportsListComponent implements OnInit {
   }
 
   editReport(id: string): void {
-    console.log('Edit report:', id);
     alert(`Edit Report ${id} - functionality would be implemented here`);
   }
 
   deleteReport(id: string): void {
-    console.log('Delete report:', id);
     if (confirm('Are you sure you want to delete this report?')) {
       // Remove from local state
       const currentReports = this.reports();
@@ -926,13 +884,8 @@ export class ReportsListComponent implements OnInit {
     const report = this.reports().find(r => r.id === id);
     if (!report) return;
 
-    console.log('Submitting report:', id);
-    console.log('Report found:', report);
-    console.log('Submit URL:', `${this.reportsService['apiUrl']}/${id}/submit`);
-
     this.reportsService.submitReport(id).subscribe({
       next: (updatedReport) => {
-        console.log('Submit successful:', updatedReport);
         this.snackBar.open(
           `Report "${updatedReport.title}" submitted for Line Manager review successfully!`,
           'Close',
@@ -946,13 +899,6 @@ export class ReportsListComponent implements OnInit {
         this.reports.set(updatedReports);
       },
       error: (error) => {
-        console.error('Error submitting report:', error);
-        console.error('Error details:', {
-          status: error.status,
-          statusText: error.statusText,
-          url: error.url,
-          message: error.message
-        });
         this.snackBar.open(
           'Failed to submit report for review. Please try again.',
           'Close',
@@ -1032,7 +978,6 @@ export class ReportsListComponent implements OnInit {
             this.loadReports();
           },
           error: (error) => {
-            console.error('Error approving report:', error);
             this.snackBar.open(
               'Failed to approve report. Please try again.',
               'Close',
@@ -1072,7 +1017,6 @@ export class ReportsListComponent implements OnInit {
             this.loadReports();
           },
           error: (error) => {
-            console.error('Error rejecting report:', error);
             this.snackBar.open(
               'Failed to reject report. Please try again.',
               'Close',
@@ -1133,3 +1077,4 @@ export class ReportsListComponent implements OnInit {
     return priority || 'Medium';
   }
 }
+

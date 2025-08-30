@@ -674,21 +674,18 @@ export class ReportsListComponent implements OnInit {
           this.reports.set(response.reports || []);
         },
         error: (error) => {
-          console.error('Error loading reports:', error);
           this.reports.set([]);
         }
       });
     } catch (error) {
-      console.error('Error loading reports:', error);
-    } finally {
+      } finally {
       this.isLoading.set(false);
     }
   }
 
   applyFilters(): void {
     // Filtering is handled reactively through computed signal
-    console.log('Filters applied:', this.filtersForm.value);
-  }
+    }
 
   clearFilters(): void {
     this.filtersForm.reset();
@@ -699,34 +696,28 @@ export class ReportsListComponent implements OnInit {
   }
 
   viewReport(id: string): void {
-    console.log('View report:', id);
     // Navigate to report detail view
   }
 
   editReport(id: string): void {
-    console.log('Edit report:', id);
     // Navigate to report edit page
   }
 
   deleteReport(id: string): void {
-    console.log('Delete report:', id);
     // Show confirmation dialog and delete
   }
 
   exportReport(id: string): void {
-    console.log('Export report:', id);
     // Export report functionality
   }
 
   submitReport(id: string): void {
     this.reportsService.submitReport(id).subscribe({
       next: (updatedReport) => {
-        console.log('Report submitted successfully:', updatedReport);
         this.loadReports(); // Refresh the list
         // Could show a success message here
       },
       error: (error) => {
-        console.error('Error submitting report:', error);
         // Could show an error message here
       }
     });
@@ -736,12 +727,10 @@ export class ReportsListComponent implements OnInit {
     // Could open a dialog for comments, for now just approve
     this.reportsService.approveReport(id).subscribe({
       next: (updatedReport) => {
-        console.log('Report approved successfully:', updatedReport);
         this.loadReports(); // Refresh the list
         // Could show a success message here
       },
       error: (error) => {
-        console.error('Error approving report:', error);
         // Could show an error message here
       }
     });
@@ -751,12 +740,10 @@ export class ReportsListComponent implements OnInit {
     // Could open a dialog for rejection reason, for now just reject with default reason
     this.reportsService.rejectReport(id, 'Report rejected by reviewer').subscribe({
       next: (updatedReport) => {
-        console.log('Report rejected successfully:', updatedReport);
         this.loadReports(); // Refresh the list
         // Could show a success message here
       },
       error: (error) => {
-        console.error('Error rejecting report:', error);
         // Could show an error message here
       }
     });
@@ -871,3 +858,4 @@ export class ReportsListComponent implements OnInit {
     return 'due-date-normal';
   }
 }
+

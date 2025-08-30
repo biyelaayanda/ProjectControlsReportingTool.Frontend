@@ -213,8 +213,6 @@ export class ReportsService {
   submitReport(id: string, comments?: string): Observable<Report> {
     const submitDto = { comments: comments || '' };
     const url = `${this.apiUrl}/${id}/submit`;
-    console.log('Submitting report to URL:', url);
-    console.log('Submit DTO:', submitDto);
     return this.http.post<Report>(url, submitDto);
   }
 
