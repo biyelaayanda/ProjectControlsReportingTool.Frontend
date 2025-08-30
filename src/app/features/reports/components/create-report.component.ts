@@ -184,6 +184,11 @@ import { Department, UserRole } from '../../../core/models/enums';
                 (uploadError)="onFileUploadError($event)">
               </app-file-upload>
 
+              <div class="attachment-note">
+                <mat-icon color="primary" style="font-size: 16px; height: 16px; width: 16px;">info</mat-icon>
+                <span>You can create reports with or without attachments. Supporting documents can also be added later during the review process.</span>
+              </div>
+
               @if (attachedFiles().length > 0) {
                 <div class="files-preview">
                   <app-file-list
@@ -321,6 +326,23 @@ import { Department, UserRole } from '../../../core/models/enums';
       color: #1976d2;
       margin-bottom: 1rem;
       font-weight: 600;
+    }
+
+    .attachment-note {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      color: #0d47a1;
+      font-size: 0.875rem;
+    }
+
+    .attachment-note mat-icon {
+      flex-shrink: 0;
     }
 
     .attachment-warning {
@@ -542,10 +564,30 @@ export class CreateReportComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creating report:', error);
+          
+          let errorMessage = 'Failed to save report. Please try again.';
+          
+          // Provide more specific error messages based on the error
+          if (error.status === 400) {
+            if (error.error && typeof error.error === 'string') {
+              errorMessage = `Error: ${error.error}`;
+            } else {
+              errorMessage = 'Invalid report data. Please check all required fields and try again.';
+            }
+          } else if (error.status === 401) {
+            errorMessage = 'You are not authorized to create reports. Please log in again.';
+          } else if (error.status === 413) {
+            errorMessage = 'File size too large. Please reduce file size and try again.';
+          } else if (error.status === 415) {
+            errorMessage = 'Unsupported file type. Please use supported file formats.';
+          } else if (error.status >= 500) {
+            errorMessage = 'Server error. Please try again later or contact support.';
+          }
+          
           this.snackBar.open(
-            'Failed to save report. Please try again.',
+            errorMessage,
             'Close',
-            { duration: 5000, panelClass: ['error-snackbar'] }
+            { duration: 7000, panelClass: ['error-snackbar'] }
           );
           this.isSubmitting.set(false);
         }
@@ -612,10 +654,30 @@ export class CreateReportComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creating report:', error);
+          
+          let errorMessage = 'Failed to create report. Please try again.';
+          
+          // Provide more specific error messages based on the error
+          if (error.status === 400) {
+            if (error.error && typeof error.error === 'string') {
+              errorMessage = `Error: ${error.error}`;
+            } else {
+              errorMessage = 'Invalid report data. Please check all required fields and try again.';
+            }
+          } else if (error.status === 401) {
+            errorMessage = 'You are not authorized to create reports. Please log in again.';
+          } else if (error.status === 413) {
+            errorMessage = 'File size too large. Please reduce file size and try again.';
+          } else if (error.status === 415) {
+            errorMessage = 'Unsupported file type. Please use supported file formats.';
+          } else if (error.status >= 500) {
+            errorMessage = 'Server error. Please try again later or contact support.';
+          }
+          
           this.snackBar.open(
-            'Failed to create report. Please try again.',
+            errorMessage,
             'Close',
-            { duration: 5000, panelClass: ['error-snackbar'] }
+            { duration: 7000, panelClass: ['error-snackbar'] }
           );
           this.isSubmitting.set(false);
           this.isSubmittingForReview.set(false);

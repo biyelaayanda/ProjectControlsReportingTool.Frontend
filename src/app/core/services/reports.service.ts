@@ -186,10 +186,10 @@ export class ReportsService {
       
       return this.http.post<Report>(this.apiUrl, formData);
     } else {
-      // No attachments, use regular JSON POST
+      // No attachments, use JSON endpoint
       const reportData = { ...reportDto };
       delete reportData.attachments;
-      return this.http.post<Report>(this.apiUrl, reportData);
+      return this.http.post<Report>(`${this.apiUrl}/json`, reportData);
     }
   }
 
