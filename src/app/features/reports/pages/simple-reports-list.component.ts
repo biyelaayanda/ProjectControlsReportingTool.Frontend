@@ -110,13 +110,12 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
                   <mat-option value="Draft">Draft</mat-option>
                   <mat-option value="Submitted">Submitted</mat-option>
                   <mat-option value="ManagerReview">Manager Review</mat-option>
-                  <mat-option value="ManagerReview">Manager Review</mat-option>
                   <mat-option value="ManagerApproved">Manager Approved</mat-option>
                   <mat-option value="GMReview">GM Review</mat-option>
-                  <mat-option value="Approved">Approved</mat-option>
-                  <mat-option value="Published">Published</mat-option>
                   <mat-option value="Completed">Completed</mat-option>
-                  <mat-option value="Rejected">Rejected</mat-option>
+                  <mat-option value="Rejected">Rejected (Generic)</mat-option>
+                  <mat-option value="ManagerRejected">Rejected by Manager</mat-option>
+                  <mat-option value="GMRejected">Rejected by GM</mat-option>
                 </mat-select>
               </mat-form-field>
 
@@ -144,12 +143,6 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
                     <mat-option value="QS">Quantity Surveying</mat-option>
                     <mat-option value="ContractsManagement">Contracts Management</mat-option>
                     <mat-option value="BusinessAssurance">Business Assurance</mat-option>
-                    <mat-option value="Engineering">Engineering</mat-option>
-                    <mat-option value="Operations">Operations</mat-option>
-                    <mat-option value="Finance">Finance</mat-option>
-                    <mat-option value="HR">Human Resources</mat-option>
-                    <mat-option value="IT">Information Technology</mat-option>
-                    <mat-option value="Planning">Planning</mat-option>
                   </mat-select>
                 </mat-form-field>
               }
@@ -748,7 +741,7 @@ export class ReportsListComponent implements OnInit {
       const filter: any = {};
       
       if (formValues.search) filter.searchTerm = formValues.search; // Match backend field name
-      if (formValues.status) filter.status = formValues.status;
+      if (formValues.status) filter.status = formValues.status; // Status enum values are sent as strings
       if (formValues.department) filter.department = formValues.department;
       if (formValues.dateFrom) filter.fromDate = new Date(formValues.dateFrom); // Match backend field name
       if (formValues.dateTo) filter.toDate = new Date(formValues.dateTo); // Match backend field name
