@@ -1650,9 +1650,26 @@ export class ReportDetailsComponent implements OnInit {
 
     // Check if report is in a state where approval documents can be uploaded
     switch (status) {
+      case ReportStatus.Submitted:
+        // For submitted reports, check if:
+        // 1. Line manager can upload if it's from their department
+        // 2. Executive can upload if it was submitted by a line manager
+        if (userRole === UserRole.LineManager) {
+          return report.department === currentUser.department;
+        }
+        if (userRole === UserRole.Executive) {
+          // Check if report was created by a line manager
+          return report.creatorRole === UserRole.LineManager;
+        }
+        return false;
+      case ReportStatus.ManagerApproved:
+        // Manager-approved reports can only have documents uploaded by executives
+        return userRole === UserRole.Executive;
       case ReportStatus.ManagerReview:
+        // Legacy status - keeping for compatibility
         return userRole === UserRole.LineManager || userRole === UserRole.Executive;
       case ReportStatus.ExecutiveReview:
+        // Legacy status - keeping for compatibility
         return userRole === UserRole.Executive;
       default:
         return false;
