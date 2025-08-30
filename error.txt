@@ -1,0 +1,2 @@
+Upload error: 
+Object { headers: {…}, status: 400, statusText: "Bad Request", url: "http://localhost:5039/api/reports/13afc4f2-ac9f-439a-b5f3-42007054d84e/approval-documents", ok: false, type: undefined, name: "HttpErrorResponse", message: "Http failure response for http://localhost:5039/api/reports/13afc4f2-ac9f-439a-b5f3-42007054d84e/approval-documents: 400 Bad Request", error: "Cannot upload documents. Report status: Submitted" }
