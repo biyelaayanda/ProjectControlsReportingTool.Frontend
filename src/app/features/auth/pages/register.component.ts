@@ -141,7 +141,7 @@ import { UserRole, Department } from '../../../core/models/enums';
                 <mat-select formControlName="role" [class.is-invalid]="isFieldInvalid('role')">
                   <mat-option [value]="UserRole.GeneralStaff">General Staff</mat-option>
                   <mat-option [value]="UserRole.LineManager">Line Manager</mat-option>
-                  <mat-option [value]="UserRole.Executive">Executive</mat-option>
+                  <mat-option [value]="UserRole.GM">GM</mat-option>
                 </mat-select>
                 @if (isFieldInvalid('role')) {
                   <mat-error>Role is required</mat-error>

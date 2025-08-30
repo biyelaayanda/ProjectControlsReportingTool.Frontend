@@ -25,7 +25,7 @@ export interface Report {
   reportNumber?: string;
   submittedDate?: Date;
   managerApprovedDate?: Date;
-  executiveApprovedDate?: Date;
+  gmApprovedDate?: Date;
   completedDate?: Date;
   rejectedDate?: Date;
   rejectionReason?: string;
@@ -219,14 +219,14 @@ export class ReportsService {
   }
 
   /**
-   * Approve a report (for managers/executives)
+   * Approve a report (for managers/GMs)
    */
   approveReport(id: string, comments?: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/${id}/approve`, { comments });
   }
 
   /**
-   * Reject a report (for managers/executives)
+   * Reject a report (for managers/GMs)
    */
   rejectReport(id: string, reason: string): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/${id}/reject`, { reason });
@@ -262,7 +262,7 @@ export class ReportsService {
   }
 
   /**
-   * Get all reports for executives
+   * Get all reports for GMs
    */
   getAllReports(filter?: ReportFilter): Observable<ReportsResponse> {
     let params = new HttpParams();

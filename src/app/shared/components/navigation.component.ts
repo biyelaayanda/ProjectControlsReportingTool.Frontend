@@ -398,13 +398,13 @@ export class NavigationComponent {
           label: 'Department Reviews',
           icon: 'rate_review',
           route: '/reports/review',
-          roles: [UserRole.LineManager, UserRole.Executive]
+          roles: [UserRole.LineManager, UserRole.GM]
         },
         {
           label: 'All Reports',
           icon: 'list_alt',
           route: '/reports/all',
-          roles: [UserRole.Executive]
+          roles: [UserRole.GM]
         }
       ]
     },
@@ -412,25 +412,25 @@ export class NavigationComponent {
       label: 'Analytics',
       icon: 'analytics',
       route: '/analytics',
-      roles: [UserRole.LineManager, UserRole.Executive]
+      roles: [UserRole.LineManager, UserRole.GM]
     },
     {
       label: 'Users',
       icon: 'people',
       route: '/users',
-      roles: [UserRole.Executive],
+      roles: [UserRole.GM],
       children: [
         {
           label: 'All Users',
           icon: 'group',
           route: '/users/all',
-          roles: [UserRole.Executive]
+          roles: [UserRole.GM]
         },
         {
           label: 'User Management',
           icon: 'admin_panel_settings',
           route: '/users/manage',
-          roles: [UserRole.Executive]
+          roles: [UserRole.GM]
         }
       ]
     },
@@ -438,19 +438,19 @@ export class NavigationComponent {
       label: 'Administration',
       icon: 'admin_panel_settings',
       route: '/admin',
-      roles: [UserRole.Executive],
+      roles: [UserRole.GM],
       children: [
         {
           label: 'System Settings',
           icon: 'settings',
           route: '/admin/settings',
-          roles: [UserRole.Executive]
+          roles: [UserRole.GM]
         },
         {
           label: 'Audit Logs',
           icon: 'history',
           route: '/admin/audit-logs',
-          roles: [UserRole.Executive]
+          roles: [UserRole.GM]
         },
         {
           label: 'Department Management',
@@ -485,8 +485,8 @@ export class NavigationComponent {
         return 'General Staff';
       case UserRole.LineManager:
         return 'Line Manager';
-      case UserRole.Executive:
-        return 'Executive';
+      case UserRole.GM:
+        return 'GM';
       default:
         return '';
     }

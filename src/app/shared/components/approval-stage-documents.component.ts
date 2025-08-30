@@ -117,27 +117,27 @@ export interface AttachmentsByStage {
             </ng-template>
           </mat-tab>
 
-          <!-- Executive Documents Tab -->
+          <!-- GM Documents Tab -->
           <mat-tab 
-            [label]="getTabLabel('Executive Review', getStageDocuments(ApprovalStage.ExecutiveReview).length)">
+            [label]="getTabLabel('GM Review', getStageDocuments(ApprovalStage.GMReview).length)">
             <ng-template matTabContent>
               <div class="tab-content">
                 <div class="stage-header">
                   <div class="stage-info">
-                    <mat-icon class="stage-icon executive-icon">business_center</mat-icon>
+                    <mat-icon class="stage-icon gm-icon">business_center</mat-icon>
                     <div>
-                      <h3>Executive Review Documents</h3>
-                      <p>Documents uploaded by executives during final approval</p>
+                      <h3>GM Review Documents</h3>
+                      <p>Documents uploaded by GM during final approval</p>
                     </div>
                   </div>
                   <mat-chip-set>
-                    <mat-chip class="executive-chip">{{ getStageDocuments(ApprovalStage.ExecutiveReview).length }} file(s)</mat-chip>
+                    <mat-chip class="gm-chip">{{ getStageDocuments(ApprovalStage.GMReview).length }} file(s)</mat-chip>
                   </mat-chip-set>
                 </div>
 
-                @if (getStageDocuments(ApprovalStage.ExecutiveReview).length > 0) {
+                @if (getStageDocuments(ApprovalStage.GMReview).length > 0) {
                   <app-file-list
-                    [files]="getStageDocuments(ApprovalStage.ExecutiveReview)"
+                    [files]="getStageDocuments(ApprovalStage.GMReview)"
                     [showActions]="true"
                     (filePreview)="onFilePreview($event)"
                     (fileDownload)="onFileDownload($event)">
@@ -145,9 +145,9 @@ export interface AttachmentsByStage {
                 } @else {
                   <div class="no-documents">
                     <mat-icon>business_center</mat-icon>
-                    <p>No executive review documents have been uploaded yet.</p>
-                    @if (showExecutiveUploadHint) {
-                      <small>Executives can upload strategic documents during the final approval process.</small>
+                    <p>No GM review documents have been uploaded yet.</p>
+                    @if (showGMUploadHint) {
+                      <small>GM can upload strategic documents during the final approval process.</small>
                     }
                   </div>
                 }
@@ -224,7 +224,7 @@ export interface AttachmentsByStage {
       color: #ff9800;
     }
 
-    .executive-icon {
+    .gm-icon {
       color: #9c27b0;
     }
 
@@ -245,7 +245,7 @@ export interface AttachmentsByStage {
       color: #f57c00;
     }
 
-    .executive-chip {
+    .gm-chip {
       background-color: #f3e5f5;
       color: #7b1fa2;
     }
@@ -307,8 +307,8 @@ export class ApprovalStageDocumentsComponent implements OnInit {
         return 'Initial';
       case ApprovalStage.ManagerReview:
         return 'ManagerReview';
-      case ApprovalStage.ExecutiveReview:
-        return 'ExecutiveReview';
+      case ApprovalStage.GMReview:
+        return 'GMReview';
       default:
         return 'Initial';
     }
@@ -322,11 +322,11 @@ export class ApprovalStageDocumentsComponent implements OnInit {
   }
 
   get showManagerUploadHint(): boolean {
-    return this.userRole === UserRole.LineManager || this.userRole === UserRole.Executive;
+    return this.userRole === UserRole.LineManager || this.userRole === UserRole.GM;
   }
 
-  get showExecutiveUploadHint(): boolean {
-    return this.userRole === UserRole.Executive;
+  get showGMUploadHint(): boolean {
+    return this.userRole === UserRole.GM;
   }
 
   onFilePreview(file: UploadedFile): void {
@@ -339,12 +339,12 @@ export class ApprovalStageDocumentsComponent implements OnInit {
 
   private selectMostRelevantTab(): void {
     // Select tab based on user role and available documents
-    const executiveDocs = this.getStageDocuments(ApprovalStage.ExecutiveReview);
+    const gmDocs = this.getStageDocuments(ApprovalStage.GMReview);
     const managerDocs = this.getStageDocuments(ApprovalStage.ManagerReview);
     const initialDocs = this.getStageDocuments(ApprovalStage.Initial);
 
-    if (this.userRole === UserRole.Executive && executiveDocs.length > 0) {
-      this.selectedTabIndex = 2; // Executive tab
+    if (this.userRole === UserRole.GM && gmDocs.length > 0) {
+      this.selectedTabIndex = 2; // GM tab
     } else if (this.userRole === UserRole.LineManager && managerDocs.length > 0) {
       this.selectedTabIndex = 1; // Manager tab
     } else if (initialDocs.length > 0) {

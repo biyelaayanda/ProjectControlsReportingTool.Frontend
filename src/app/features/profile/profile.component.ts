@@ -483,7 +483,7 @@ export class ProfileComponent implements OnInit {
   getRoleName(): string {
     const role = this.currentUser()?.role;
     switch (role) {
-      case UserRole.Executive: return 'Executive';
+      case UserRole.GM: return 'GM';
       case UserRole.LineManager: return 'Line Manager';
       case UserRole.GeneralStaff: return 'General Staff';
       default: return 'Unknown';

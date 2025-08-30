@@ -39,8 +39,8 @@ interface ReportStats {
             Overview of your reports and workflow status
           } @else if (isLineManager()) {
             Overview of your team's reports requiring your attention
-          } @else if (isExecutive()) {
-            Executive overview of all organizational reports
+          } @else if (isGM()) {
+            GM overview of all organizational reports
           }
         </p>
       </div>
@@ -74,7 +74,7 @@ interface ReportStats {
           }
 
           <!-- Pending Reviews Card -->
-          @if (isLineManager() || isExecutive()) {
+          @if (isLineManager() || isGM()) {
             <mat-card class="stat-card pending-reviews">
               <mat-card-content>
                 <div class="stat-content">
@@ -114,7 +114,7 @@ interface ReportStats {
           </mat-card>
 
           <!-- Total Reports Card -->
-          @if (isExecutive()) {
+          @if (isGM()) {
             <mat-card class="stat-card total-reports">
               <mat-card-content>
                 <div class="stat-content">
@@ -163,7 +163,7 @@ interface ReportStats {
               Create New Report
             </button>
             
-            @if (isLineManager() || isExecutive()) {
+            @if (isLineManager() || isGM()) {
               <button mat-raised-button color="accent" (click)="viewPendingReviews()" [disabled]="!stats()?.pendingReviews">
                 <mat-icon>rate_review</mat-icon>
                 Review Reports ({{ stats()?.pendingReviews || 0 }})
@@ -175,7 +175,7 @@ interface ReportStats {
               View All Reports
             </button>
             
-            @if (isExecutive()) {
+            @if (isGM()) {
               <button mat-raised-button (click)="generateReport()">
                 <mat-icon>analytics</mat-icon>
                 Generate Analytics
@@ -343,7 +343,7 @@ export class ReportsDashboardComponent implements OnInit {
   currentUser = computed(() => this.authService.currentUser());
   isGeneralStaff = computed(() => this.currentUser()?.role === UserRole.GeneralStaff);
   isLineManager = computed(() => this.currentUser()?.role === UserRole.LineManager);
-  isExecutive = computed(() => this.currentUser()?.role === UserRole.Executive);
+  isGM = computed(() => this.currentUser()?.role === UserRole.GM);
 
   ngOnInit() {
     this.loadStats();

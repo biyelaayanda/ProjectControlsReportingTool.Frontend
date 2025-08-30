@@ -402,14 +402,14 @@ export class CreateReportComponent implements OnInit {
       const user = this.currentUser();
       console.log('Effect triggered - User:', user);
       if (user) {
-        // Update department to user's department if not an executive
-        if (user.role !== UserRole.Executive) {
+        // Update department to user's department if not a GM
+        if (user.role !== UserRole.GM) {
           const defaultDept = user.department || Department.ProjectSupport;
-          console.log('Setting department for non-executive to:', defaultDept);
+          console.log('Setting department for non-GM to:', defaultDept);
           this.reportForm.get('department')?.setValue(defaultDept);
           console.log('Department control value after setting:', this.reportForm.get('department')?.value);
         } else {
-          console.log('User is executive, keeping current department value');
+          console.log('User is GM, keeping current department value');
         }
         
         // Update department control state
@@ -438,14 +438,14 @@ export class CreateReportComponent implements OnInit {
   // Department logic - converted to computed signals to prevent infinite loops
   canSelectDepartment = computed(() => {
     const user = this.currentUser();
-    return user?.role === UserRole.Executive;
+    return user?.role === UserRole.GM;
   });
 
   availableDepartments = computed(() => {
     const user = this.currentUser();
     
-    if (user?.role === UserRole.Executive) {
-      // Executives can create reports for any department
+    if (user?.role === UserRole.GM) {
+      // GM can create reports for any department
       return [
         { value: Department.ProjectSupport, label: 'Project Support' },
         { value: Department.DocManagement, label: 'Document Management' },

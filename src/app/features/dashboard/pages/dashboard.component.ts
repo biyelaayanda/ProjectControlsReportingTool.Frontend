@@ -640,7 +640,7 @@ export class DashboardComponent implements OnInit {
       }
     ];
 
-    if (userRole === UserRole.LineManager || userRole === UserRole.Executive) {
+    if (userRole === UserRole.LineManager || userRole === UserRole.GM) {
       baseCards.push({
         title: 'Pending Reviews',
         value: 6,
@@ -651,7 +651,7 @@ export class DashboardComponent implements OnInit {
       });
     }
 
-    if (userRole === UserRole.Executive) {
+    if (userRole === UserRole.GM) {
       baseCards.push({
         title: 'Team Members',
         value: 24,
@@ -682,7 +682,7 @@ export class DashboardComponent implements OnInit {
       }
     ];
 
-    if (userRole === UserRole.LineManager || userRole === UserRole.Executive) {
+    if (userRole === UserRole.LineManager || userRole === UserRole.GM) {
       baseActions.push({
         title: 'Review Reports',
         icon: 'rate_review',
@@ -691,7 +691,7 @@ export class DashboardComponent implements OnInit {
       });
     }
 
-    if (userRole === UserRole.Executive) {
+    if (userRole === UserRole.GM) {
       baseActions.push({
         title: 'Analytics',
         icon: 'analytics',
@@ -705,7 +705,7 @@ export class DashboardComponent implements OnInit {
 
   showDepartmentSummary = computed(() => {
     const userRole = this.currentUser()?.role;
-    return userRole === UserRole.LineManager || userRole === UserRole.Executive;
+    return userRole === UserRole.LineManager || userRole === UserRole.GM;
   });
 
   ngOnInit(): void {
@@ -727,8 +727,8 @@ export class DashboardComponent implements OnInit {
         return 'General Staff';
       case UserRole.LineManager:
         return 'Line Manager';
-      case UserRole.Executive:
-        return 'Executive';
+      case UserRole.GM:
+        return 'GM';
       default:
         return '';
     }

@@ -106,7 +106,7 @@ import { environment } from '../../../environments/environment';
       color: #ff9800;
     }
 
-    .stage-icon-executive {
+    .stage-icon-gm {
       color: #9c27b0;
     }
 
@@ -229,7 +229,7 @@ export class ApprovalDocumentUploadComponent {
     switch (this.approvalStage) {
       case ApprovalStage.ManagerReview:
         return 'supervisor_account';
-      case ApprovalStage.ExecutiveReview:
+      case ApprovalStage.GMReview:
         return 'business_center';
       default:
         return 'upload_file';
@@ -240,8 +240,8 @@ export class ApprovalDocumentUploadComponent {
     switch (this.approvalStage) {
       case ApprovalStage.ManagerReview:
         return 'stage-icon-manager';
-      case ApprovalStage.ExecutiveReview:
-        return 'stage-icon-executive';
+      case ApprovalStage.GMReview:
+        return 'stage-icon-gm';
       default:
         return '';
     }
@@ -251,8 +251,8 @@ export class ApprovalDocumentUploadComponent {
     switch (this.approvalStage) {
       case ApprovalStage.ManagerReview:
         return 'Manager Review';
-      case ApprovalStage.ExecutiveReview:
-        return 'Executive Review';
+      case ApprovalStage.GMReview:
+        return 'GM Review';
       default:
         return 'Approval';
     }
@@ -262,8 +262,8 @@ export class ApprovalDocumentUploadComponent {
     switch (this.approvalStage) {
       case ApprovalStage.ManagerReview:
         return 'Upload supporting documents, analysis, or compliance materials for manager review.';
-      case ApprovalStage.ExecutiveReview:
-        return 'Upload strategic documents, executive summaries, or final materials for executive review.';
+      case ApprovalStage.GMReview:
+        return 'Upload strategic documents, GM summaries, or final materials for GM review.';
       default:
         return 'Upload documents for the approval process.';
     }

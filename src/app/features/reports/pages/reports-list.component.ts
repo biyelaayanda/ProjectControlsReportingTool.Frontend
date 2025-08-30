@@ -622,7 +622,7 @@ export class ReportsListComponent implements OnInit {
   
   canViewAllDepartments = computed(() => {
     const user = this.currentUser();
-    return user?.role === UserRole.Executive || user?.role === UserRole.LineManager;
+    return user?.role === UserRole.GM || user?.role === UserRole.LineManager;
   });
 
   filteredReports = computed(() => {
@@ -771,16 +771,16 @@ export class ReportsListComponent implements OnInit {
       return report.status === ReportStatus.Draft || report.status === ReportStatus.Rejected;
     }
 
-    // Executives can edit any report
-    return user.role === UserRole.Executive;
+    // GM can edit any report
+    return user.role === UserRole.GM;
   }
 
   canDeleteReport(report: Report): boolean {
     const user = this.currentUser();
     if (!user) return false;
 
-    // Only executives or report creators (if draft) can delete
-    if (user.role === UserRole.Executive) return true;
+    // Only GM or report creators (if draft) can delete
+    if (user.role === UserRole.GM) return true;
     
     return report.creatorName === `${user.firstName} ${user.lastName}` && 
            report.status === ReportStatus.Draft;
@@ -807,8 +807,8 @@ export class ReportsListComponent implements OnInit {
       return true;
     }
 
-    // Executives can approve manager-approved reports
-    if (user.role === UserRole.Executive && 
+    // GM can approve manager-approved reports
+    if (user.role === UserRole.GM && 
         report.status === ReportStatus.ManagerApproved) {
       return true;
     }
@@ -827,9 +827,9 @@ export class ReportsListComponent implements OnInit {
       return true;
     }
 
-    // Executives can reject manager-approved reports
-    if (user.role === UserRole.Executive && 
-        (report.status === ReportStatus.ManagerApproved || report.status === ReportStatus.ExecutiveReview)) {
+    // GM can reject manager-approved reports
+    if (user.role === UserRole.GM && 
+        (report.status === ReportStatus.ManagerApproved || report.status === ReportStatus.GMReview)) {
       return true;
     }
 
@@ -842,11 +842,11 @@ export class ReportsListComponent implements OnInit {
       case ReportStatus.Submitted: return 'Submitted';
       case ReportStatus.ManagerReview: return 'Manager Review';
       case ReportStatus.ManagerApproved: return 'Manager Approved';
-      case ReportStatus.ExecutiveReview: return 'Executive Review';
+      case ReportStatus.GMReview: return 'GM Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
       case ReportStatus.ManagerRejected: return 'Rejected by Manager';
-      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
+      case ReportStatus.GMRejected: return 'Rejected by GM';
       default: return 'Unknown Status';
     }
   }

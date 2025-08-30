@@ -2,7 +2,7 @@
 export enum UserRole {
   GeneralStaff = 1,
   LineManager = 2,
-  Executive = 3
+  GM = 3
 }
 
 export enum Department {
@@ -18,16 +18,16 @@ export enum ReportStatus {
   Submitted = 2,
   ManagerReview = 3,
   ManagerApproved = 4,
-  ExecutiveReview = 5,
+  GMReview = 5,
   Completed = 6,
   Rejected = 7,          // Generic rejection (for backward compatibility)
   ManagerRejected = 8,   // Specifically rejected by Line Manager
-  ExecutiveRejected = 9  // Specifically rejected by Executive
+  GMRejected = 9  // Specifically rejected by GM
 }
 
 export enum SignatureType {
   ManagerSignature = 1,
-  ExecutiveSignature = 2
+  GMSignature = 2
 }
 
 export enum AuditAction {
@@ -44,5 +44,5 @@ export enum AuditAction {
 export enum ApprovalStage {
   Initial = 1,           // Uploaded by report creator during initial creation
   ManagerReview = 2,     // Uploaded by line manager during approval process
-  ExecutiveReview = 3    // Uploaded by executive during approval process
+  GMReview = 3    // Uploaded by GM during approval process
 }

@@ -358,10 +358,10 @@ export class WorkflowTrackerComponent {
       },
       {
         status: ReportStatus.Submitted,
-        label: isCreatedByManager ? 'Submitted for Executive Review' : 'Submitted for Review',
+        label: isCreatedByManager ? 'Submitted for GM Review' : 'Submitted for Review',
         icon: 'send',
         description: isCreatedByManager ? 
-          'Report has been submitted directly to Executive for review (created by Line Manager)' :
+          'Report has been submitted directly to GM for review (created by Line Manager)' :
           'Report has been submitted to Line Manager for review',
         isCompleted: status > ReportStatus.Submitted,
         isCurrent: status === ReportStatus.Submitted,
@@ -393,14 +393,14 @@ export class WorkflowTrackerComponent {
       );
     }
 
-    // Add Executive Review step
+    // Add GM Review step
     steps.push({
-      status: ReportStatus.ExecutiveReview,
-      label: 'Executive Review',
+      status: ReportStatus.GMReview,
+      label: 'GM Review',
       icon: 'supervisor_account',
-      description: 'Executive is conducting final review before completion',
-      isCompleted: status > ReportStatus.ExecutiveReview,
-      isCurrent: status === ReportStatus.ExecutiveReview,
+      description: 'GM is conducting final review before completion',
+      isCompleted: status > ReportStatus.GMReview,
+      isCurrent: status === ReportStatus.GMReview,
       isAvailable: isCreatedByManager ? 
         status >= ReportStatus.Submitted : 
         status >= ReportStatus.ManagerApproved
@@ -414,11 +414,11 @@ export class WorkflowTrackerComponent {
       description: 'Report is fully approved and ready for use',
       isCompleted: status === ReportStatus.Completed,
       isCurrent: status === ReportStatus.Completed,
-      isAvailable: status >= ReportStatus.ExecutiveReview
+      isAvailable: status >= ReportStatus.GMReview
     });
 
     // Handle rejected statuses
-    if (status === ReportStatus.Rejected || status === ReportStatus.ManagerRejected || status === ReportStatus.ExecutiveRejected) {
+    if (status === ReportStatus.Rejected || status === ReportStatus.ManagerRejected || status === ReportStatus.GMRejected) {
       steps.forEach(step => {
         step.isCompleted = false;
         step.isCurrent = false;
@@ -436,9 +436,9 @@ export class WorkflowTrackerComponent {
       if (status === ReportStatus.ManagerRejected) {
         lastStep.label = 'Rejected by Manager';
         lastStep.description = 'Report was rejected by Line Manager and needs revision';
-      } else if (status === ReportStatus.ExecutiveRejected) {
-        lastStep.label = 'Rejected by Executive';
-        lastStep.description = 'Report was rejected by Executive and needs revision';
+      } else if (status === ReportStatus.GMRejected) {
+        lastStep.label = 'Rejected by GM';
+        lastStep.description = 'Report was rejected by GM and needs revision';
       } else {
         lastStep.label = 'Rejected';
         lastStep.description = 'Report was rejected and needs revision';
@@ -463,11 +463,11 @@ export class WorkflowTrackerComponent {
       case ReportStatus.Submitted: return 'Submitted for Review';
       case ReportStatus.ManagerReview: return 'Under Manager Review';
       case ReportStatus.ManagerApproved: return 'Manager Approved';
-      case ReportStatus.ExecutiveReview: return 'Under Executive Review';
+      case ReportStatus.GMReview: return 'Under GM Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
       case ReportStatus.ManagerRejected: return 'Rejected by Manager';
-      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
+      case ReportStatus.GMRejected: return 'Rejected by GM';
       default: return 'Unknown Status';
     }
   }
@@ -482,17 +482,17 @@ export class WorkflowTrackerComponent {
       case ReportStatus.ManagerReview:
         return 'The Line Manager is currently reviewing the report content and quality.';
       case ReportStatus.ManagerApproved:
-        return 'The Line Manager has approved the report. It will now be sent to Executive for final review.';
-      case ReportStatus.ExecutiveReview:
-        return 'The Executive is conducting the final review before completion.';
+        return 'The Line Manager has approved the report. It will now be sent to GM for final review.';
+      case ReportStatus.GMReview:
+        return 'The GM is conducting the final review before completion.';
       case ReportStatus.Completed:
         return 'The report has been fully approved and is now complete. It can be downloaded and used.';
       case ReportStatus.Rejected:
         return 'The report has been rejected and returned for revision. Please check the feedback and resubmit.';
       case ReportStatus.ManagerRejected:
         return 'The Line Manager has rejected this report and returned it for revision. Please review the feedback, make necessary changes, and resubmit.';
-      case ReportStatus.ExecutiveRejected:
-        return 'The Executive has rejected this report and returned it for revision. Please review the feedback, make necessary changes, and resubmit through your Line Manager.';
+      case ReportStatus.GMRejected:
+        return 'The GM has rejected this report and returned it for revision. Please review the feedback, make necessary changes, and resubmit through your Line Manager.';
       default:
         return 'Report status is unknown.';
     }
@@ -519,13 +519,13 @@ export class WorkflowTrackerComponent {
         return 'Waiting for Line Manager decision';
       
       case ReportStatus.ManagerApproved:
-        return 'Automatically forwarded to Executive for final review';
+        return 'Automatically forwarded to GM for final review';
       
-      case ReportStatus.ExecutiveReview:
-        if (userRole === UserRole.Executive) {
+      case ReportStatus.GMReview:
+        if (userRole === UserRole.GM) {
           return 'Conduct final review and approve/reject';
         }
-        return 'Waiting for Executive final approval';
+        return 'Waiting for GM final approval';
       
       case ReportStatus.Completed:
         return 'Report is complete and ready for download';
@@ -553,8 +553,8 @@ export class WorkflowTrackerComponent {
       case ReportStatus.ManagerReview:
         return userRole === UserRole.LineManager && isSameDepartment;
       
-      case ReportStatus.ExecutiveReview:
-        return userRole === UserRole.Executive;
+      case ReportStatus.GMReview:
+        return userRole === UserRole.GM;
       
       default:
         return false;

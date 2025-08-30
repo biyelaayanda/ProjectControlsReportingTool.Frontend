@@ -332,10 +332,10 @@ import { environment } from '../../../../environments/environment';
                         <span class="value">{{ report()?.managerApprovedDate | date:'full' }}</span>
                       </div>
                     }
-                    @if (report()?.executiveApprovedDate) {
+                    @if (report()?.gmApprovedDate) {
                       <div class="detail-row">
-                        <span class="label">Executive Approved:</span>
-                        <span class="value">{{ report()?.executiveApprovedDate | date:'full' }}</span>
+                        <span class="label">GM Approved:</span>
+                        <span class="value">{{ report()?.gmApprovedDate | date:'full' }}</span>
                       </div>
                     }
                     @if (report()?.completedDate) {
@@ -846,7 +846,7 @@ import { environment } from '../../../../environments/environment';
     .status-submitted { background-color: #2196f3 !important; color: white !important; }
     .status-manager-review { background-color: #ff9800 !important; color: white !important; }
     .status-manager-approved { background-color: #4caf50 !important; color: white !important; }
-    .status-executive-review { background-color: #9c27b0 !important; color: white !important; }
+    .status-gm-review { background-color: #9c27b0 !important; color: white !important; }
     .status-completed { background-color: #4caf50 !important; color: white !important; }
     .status-rejected { background-color: #f44336 !important; color: white !important; }
 
@@ -1086,10 +1086,10 @@ export class ReportDetailsComponent implements OnInit {
       }
     }
     
-    // Executives can edit:
+    // GMs can edit:
     // 1. Their own reports in any editable status
     // 2. Any report in certain statuses for administrative purposes
-    if (user.role === UserRole.Executive) {
+    if (user.role === UserRole.GM) {
       const userFullName = `${user.firstName} ${user.lastName}`;
       const isOwnReport = report.creatorName === userFullName;
       
@@ -1099,7 +1099,7 @@ export class ReportDetailsComponent implements OnInit {
                report.status === ReportStatus.ManagerApproved;
       }
       
-      // Executives can edit reports under review for corrections
+      // GMs can edit reports under review for corrections
       return report.status === ReportStatus.Submitted || 
              report.status === ReportStatus.ManagerApproved;
     }
@@ -1124,8 +1124,8 @@ export class ReportDetailsComponent implements OnInit {
       return report.department === user.department;
     }
     
-    // Executives can view all reports
-    return user.role === UserRole.Executive;
+    // GMs can view all reports
+    return user.role === UserRole.GM;
   }
 
   canSubmit(): boolean {
@@ -1151,8 +1151,8 @@ export class ReportDetailsComponent implements OnInit {
              report.status === ReportStatus.ManagerReview;
     }
     
-    if (user.role === UserRole.Executive) {
-      return report.status === ReportStatus.ExecutiveReview;
+    if (user.role === UserRole.GM) {
+      return report.status === ReportStatus.GMReview;
     }
     
     return false;
@@ -1410,11 +1410,11 @@ export class ReportDetailsComponent implements OnInit {
       case ReportStatus.Submitted: return 'Submitted';
       case ReportStatus.ManagerReview: return 'Manager Review';
       case ReportStatus.ManagerApproved: return 'Manager Approved';
-      case ReportStatus.ExecutiveReview: return 'Executive Review';
+      case ReportStatus.GMReview: return 'GM Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
       case ReportStatus.ManagerRejected: return 'Rejected by Manager';
-      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
+      case ReportStatus.GMRejected: return 'Rejected by GM';
       default: return 'Unknown';
     }
   }
@@ -1429,11 +1429,11 @@ export class ReportDetailsComponent implements OnInit {
       case ReportStatus.Submitted: return 'send';
       case ReportStatus.ManagerReview: return 'rate_review';
       case ReportStatus.ManagerApproved: return 'check_circle';
-      case ReportStatus.ExecutiveReview: return 'supervisor_account';
+      case ReportStatus.GMReview: return 'supervisor_account';
       case ReportStatus.Completed: return 'verified';
       case ReportStatus.Rejected: return 'cancel';
       case ReportStatus.ManagerRejected: return 'cancel';
-      case ReportStatus.ExecutiveRejected: return 'cancel';
+      case ReportStatus.GMRejected: return 'cancel';
       default: return 'help';
     }
   }
@@ -1653,24 +1653,24 @@ export class ReportDetailsComponent implements OnInit {
       case ReportStatus.Submitted:
         // For submitted reports, check if:
         // 1. Line manager can upload if it's from their department
-        // 2. Executive can upload if it was submitted by a line manager
+        // 2. GM can upload if it was submitted by a line manager
         if (userRole === UserRole.LineManager) {
           return report.department === currentUser.department;
         }
-        if (userRole === UserRole.Executive) {
+        if (userRole === UserRole.GM) {
           // Check if report was created by a line manager
           return report.creatorRole === UserRole.LineManager;
         }
         return false;
       case ReportStatus.ManagerApproved:
-        // Manager-approved reports can only have documents uploaded by executives
-        return userRole === UserRole.Executive;
+        // Manager-approved reports can only have documents uploaded by GMs
+        return userRole === UserRole.GM;
       case ReportStatus.ManagerReview:
         // Legacy status - keeping for compatibility
-        return userRole === UserRole.LineManager || userRole === UserRole.Executive;
-      case ReportStatus.ExecutiveReview:
+        return userRole === UserRole.LineManager || userRole === UserRole.GM;
+      case ReportStatus.GMReview:
         // Legacy status - keeping for compatibility
-        return userRole === UserRole.Executive;
+        return userRole === UserRole.GM;
       default:
         return false;
     }
@@ -1688,10 +1688,10 @@ export class ReportDetailsComponent implements OnInit {
       case ReportStatus.ManagerApproved:
       case ReportStatus.ManagerRejected:
         return ApprovalStage.ManagerReview;
-      case ReportStatus.ExecutiveReview:
-      case ReportStatus.ExecutiveRejected:
+      case ReportStatus.GMReview:
+      case ReportStatus.GMRejected:
       case ReportStatus.Completed:
-        return ApprovalStage.ExecutiveReview;
+        return ApprovalStage.GMReview;
       default:
         return ApprovalStage.Initial;
     }
@@ -1725,7 +1725,7 @@ export class ReportDetailsComponent implements OnInit {
     const result: { [key in ApprovalStage]: UploadedFile[] } = {
       [ApprovalStage.Initial]: [],
       [ApprovalStage.ManagerReview]: [],
-      [ApprovalStage.ExecutiveReview]: []
+      [ApprovalStage.GMReview]: []
     };
 
     attachments.forEach(attachment => {

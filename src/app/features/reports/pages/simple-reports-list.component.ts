@@ -61,15 +61,15 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
                 <mat-chip class="role-chip staff-chip">My Reports</mat-chip>
               } @else if (isLineManager()) {
                 <mat-chip class="role-chip manager-chip">@if (isReviewPage()) {Department Reviews} @else {My Reports}</mat-chip>
-              } @else if (isExecutive()) {
-                <mat-chip class="role-chip executive-chip">@if (isReviewPage()) {Executive Reviews} @else {All Reports}</mat-chip>
+              } @else if (isGM()) {
+                <mat-chip class="role-chip gm-chip">@if (isReviewPage()) {GM Reviews} @else {All Reports}</mat-chip>
               }
             </h1>
             <p class="page-subtitle">
               @if (isReviewPage()) {
                 @if (isLineManager()) {
                   Review and approve reports submitted by your department members
-                } @else if (isExecutive()) {
+                } @else if (isGM()) {
                   Review and approve reports approved by Line Managers
                 }
               } @else {
@@ -77,8 +77,8 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
                   Manage and track your project controls reports for Rand Water
                 } @else if (isLineManager()) {
                   Manage your own reports and oversee your department's reporting activities
-                } @else if (isExecutive()) {
-                  Executive view of all project controls reports across Rand Water
+                } @else if (isGM()) {
+                  GM view of all project controls reports across Rand Water
                 }
               }
             </p>
@@ -112,7 +112,7 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
                   <mat-option value="ManagerReview">Manager Review</mat-option>
                   <mat-option value="ManagerReview">Manager Review</mat-option>
                   <mat-option value="ManagerApproved">Manager Approved</mat-option>
-                  <mat-option value="ExecutiveReview">Executive Review</mat-option>
+                  <mat-option value="GMReview">GM Review</mat-option>
                   <mat-option value="Approved">Approved</mat-option>
                   <mat-option value="Published">Published</mat-option>
                   <mat-option value="Completed">Completed</mat-option>
@@ -134,7 +134,7 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
                 <mat-datepicker #toPicker></mat-datepicker>
               </mat-form-field>
 
-              @if (isExecutive()) {
+              @if (isGM()) {
                 <mat-form-field appearance="outline">
                   <mat-label>Department</mat-label>
                   <mat-select formControlName="department">
@@ -327,7 +327,7 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
       color: #f57c00;
     }
 
-    .executive-chip {
+    .gm-chip {
       background-color: #f3e5f5;
       color: #7b1fa2;
     }
@@ -356,7 +356,7 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
       align-items: center;
     }
 
-    .filters-row.executive-view {
+    .filters-row.gm-view {
       -ms-grid-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
       grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto auto;
     }
@@ -476,7 +476,7 @@ import { ReviewReportDialogComponent, ReviewReportDialogData, ReviewReportDialog
     .status-inreview { background-color: #fff3e0; color: #f57c00; }
     .status-managerreview { background-color: #fff8e1; color: #f9a825; }
     .status-managerapproved { background-color: #e8f5e8; color: #2e7d32; }
-    .status-executivereview { background-color: #fce4ec; color: #c2185b; }
+    .status-gmreview { background-color: #fce4ec; color: #c2185b; }
     .status-approved { background-color: #e8f5e8; color: #2e7d32; }
     .status-published { background-color: #e8f5e8; color: #388e3c; }
     .status-completed { background-color: #e8f5e8; color: #1b5e20; }
@@ -611,7 +611,7 @@ export class ReportsListComponent implements OnInit {
   // Role-based computed properties
   isGeneralStaff = computed(() => this.currentUser()?.role === UserRole.GeneralStaff);
   isLineManager = computed(() => this.currentUser()?.role === UserRole.LineManager);
-  isExecutive = computed(() => this.currentUser()?.role === UserRole.Executive);
+  isGM = computed(() => this.currentUser()?.role === UserRole.GM);
 
   filteredReports = computed(() => {
     const allReports = this.reports();
@@ -665,41 +665,41 @@ export class ReportsListComponent implements OnInit {
       return departmentReports;
     }
 
-    // For Executives: Show ALL reports from ALL departments that need executive attention
-    if (this.isExecutive()) {
-      console.log('Debug - User is executive, showing ALL reports needing executive attention from ALL departments');
+    // For GM: Show ALL reports from ALL departments that need GM attention
+    if (this.isGM()) {
+      console.log('Debug - User is GM, showing ALL reports needing GM attention from ALL departments');
       
-      const executiveReports = allReports.filter(report => {
+      const gmReports = allReports.filter(report => {
         const userFullName = `${user.firstName} ${user.lastName}`;
         const isOwnReport = report.creatorName === userFullName;
         
-        // Reports that need executive review from ALL departments:
+        // Reports that need GM review from ALL departments:
         // Backend already filters appropriately, so we just need to show them
-        // 1. Manager approved reports (from staff → manager → executive workflow)
+        // 1. Manager approved reports (from staff → manager → GM workflow)
         // 2. Line Manager submitted reports (backend filters by creator role)
-        // 3. Reports already in executive review
+        // 3. Reports already in GM review
         // 4. Completed reports (for historical view)
-        const needsExecReview = report.status === ReportStatus.ManagerApproved ||
+        const needsGMReview = report.status === ReportStatus.ManagerApproved ||
           report.status === ReportStatus.Submitted ||  // Backend ensures only LineManager submitted reports
-          report.status === ReportStatus.ExecutiveReview ||
+          report.status === ReportStatus.GMReview ||
           report.status === ReportStatus.Completed;
         
         if (this.isReviewPage()) {
-          // On REVIEW page: Show ALL reports from ALL departments that need executive attention
-          // Include both own and other department reports since executive oversees everything
-          const shouldShow = needsExecReview;
-          console.log(`Debug - Executive Review Page - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (needsReview: ${needsExecReview})`);
+          // On REVIEW page: Show ALL reports from ALL departments that need GM attention
+          // Include both own and other department reports since GM oversees everything
+          const shouldShow = needsGMReview;
+          console.log(`Debug - GM Review Page - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (needsReview: ${needsGMReview})`);
           return shouldShow;
         } else {
           // On DASHBOARD page: Show own reports plus ALL reports needing attention from ALL departments
-          const shouldShow = isOwnReport || needsExecReview;
-          console.log(`Debug - Executive Dashboard - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (own: ${isOwnReport}, needsReview: ${needsExecReview})`);
+          const shouldShow = isOwnReport || needsGMReview;
+          console.log(`Debug - GM Dashboard - Report "${report.title}" (${report.status}, dept: ${report.department}) - Include: ${shouldShow} (own: ${isOwnReport}, needsReview: ${needsGMReview})`);
           return shouldShow;
         }
       });
       
-      console.log('Debug - Filtered executive reports (ALL departments):', executiveReports);
-      return executiveReports;
+      console.log('Debug - Filtered GM reports (ALL departments):', gmReports);
+      return gmReports;
     }
 
     // Fallback: no reports
@@ -737,7 +737,7 @@ export class ReportsListComponent implements OnInit {
       console.log('Debug - On review page, applying review filters');
       this.isReviewPage.set(true);
       // For review page, we want to show only reports that need attention
-      // This is already handled by the filteredReports computed property for Line Managers and Executives
+      // This is already handled by the filteredReports computed property for Line Managers and GM
     }
     
     // Handle query parameters from dashboard navigation
@@ -814,7 +814,7 @@ export class ReportsListComponent implements OnInit {
         break;
       case 'pending-reviews':
         this.filtersForm.patchValue({ 
-          status: [ReportStatus.ManagerReview, ReportStatus.ExecutiveReview] 
+          status: [ReportStatus.ManagerReview, ReportStatus.GMReview] 
         });
         break;
       case 'team-reports':
@@ -877,10 +877,10 @@ export class ReportsListComponent implements OnInit {
              report.status === ReportStatus.ManagerReview;
     }
 
-    // Executives can edit any report in review status
-    if (user.role === UserRole.Executive) {
+    // GM can edit any report in review status
+    if (user.role === UserRole.GM) {
       return report.status === ReportStatus.ManagerApproved || 
-             report.status === ReportStatus.ExecutiveReview ||
+             report.status === ReportStatus.GMReview ||
              report.status === ReportStatus.Draft ||
              report.status === ReportStatus.Rejected;
     }
@@ -902,8 +902,8 @@ export class ReportsListComponent implements OnInit {
       return report.status === ReportStatus.Draft;
     }
 
-    // Executives can delete any draft or rejected report
-    if (user.role === UserRole.Executive) {
+    // GM can delete any draft or rejected report
+    if (user.role === UserRole.GM) {
       return report.status === ReportStatus.Draft || report.status === ReportStatus.Rejected;
     }
 
@@ -972,10 +972,10 @@ export class ReportsListComponent implements OnInit {
              report.status === ReportStatus.Submitted;
     }
 
-    // Executives can approve:
-    // 1. Manager-approved reports (from staff → manager → executive workflow)
-    // 2. Line Manager submitted reports (direct manager → executive workflow)
-    if (user.role === UserRole.Executive) {
+    // GM can approve:
+    // 1. Manager-approved reports (from staff → manager → GM workflow)
+    // 2. Line Manager submitted reports (direct manager → GM workflow)
+    if (user.role === UserRole.GM) {
       return report.status === ReportStatus.ManagerApproved ||
              report.status === ReportStatus.Submitted;  // Include Line Manager submitted reports
     }
@@ -993,10 +993,10 @@ export class ReportsListComponent implements OnInit {
              report.status === ReportStatus.Submitted;
     }
 
-    // Executives can reject:
-    // 1. Manager-approved reports (from staff → manager → executive workflow)
-    // 2. Line Manager submitted reports (direct manager → executive workflow)
-    if (user.role === UserRole.Executive) {
+    // GM can reject:
+    // 1. Manager-approved reports (from staff → manager → GM workflow)
+    // 2. Line Manager submitted reports (direct manager → GM workflow)
+    if (user.role === UserRole.GM) {
       return report.status === ReportStatus.ManagerApproved ||
              report.status === ReportStatus.Submitted;  // Include Line Manager submitted reports
     }
@@ -1090,11 +1090,11 @@ export class ReportsListComponent implements OnInit {
       case ReportStatus.Submitted: return 'Submitted';
       case ReportStatus.ManagerReview: return 'ManagerReview';
       case ReportStatus.ManagerApproved: return 'ManagerApproved';
-      case ReportStatus.ExecutiveReview: return 'ExecutiveReview';
+      case ReportStatus.GMReview: return 'GMReview';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
       case ReportStatus.ManagerRejected: return 'Rejected by Manager';
-      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
+      case ReportStatus.GMRejected: return 'Rejected by GM';
       default: return 'Unknown';
     }
   }

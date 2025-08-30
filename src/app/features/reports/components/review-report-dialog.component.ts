@@ -257,7 +257,7 @@ export interface ReviewReportDialogResult {
     .status-submitted { background-color: #e3f2fd; color: #1976d2; }
     .status-managerreview { background-color: #fff8e1; color: #f9a825; }
     .status-managerapproved { background-color: #e8f5e8; color: #2e7d32; }
-    .status-executivereview { background-color: #fce4ec; color: #c2185b; }
+    .status-gmreview { background-color: #fce4ec; color: #c2185b; }
     .status-approved { background-color: #e8f5e8; color: #2e7d32; }
     .status-rejected { background-color: #ffebee; color: #c62828; }
 
@@ -358,11 +358,11 @@ export class ReviewReportDialogComponent {
       case ReportStatus.Submitted: return 'Submitted';
       case ReportStatus.ManagerReview: return 'Manager Review';
       case ReportStatus.ManagerApproved: return 'Manager Approved';
-      case ReportStatus.ExecutiveReview: return 'Executive Review';
+      case ReportStatus.GMReview: return 'GM Review';
       case ReportStatus.Completed: return 'Completed';
       case ReportStatus.Rejected: return 'Rejected';
       case ReportStatus.ManagerRejected: return 'Rejected by Manager';
-      case ReportStatus.ExecutiveRejected: return 'Rejected by Executive';
+      case ReportStatus.GMRejected: return 'Rejected by GM';
       default: return 'Unknown';
     }
   }
