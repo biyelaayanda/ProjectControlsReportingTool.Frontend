@@ -53,13 +53,13 @@ export interface AttachmentInfo {
 }
 
 export interface ReportFilter {
-  search?: string;
+  searchTerm?: string;
   status?: ReportStatus;
   department?: Department;
   type?: string;
   createdBy?: string;
-  dateFrom?: Date;
-  dateTo?: Date;
+  fromDate?: Date;
+  toDate?: Date;
   page?: number;
   pageSize?: number;
 }
@@ -130,13 +130,13 @@ export class ReportsService {
     let params = new HttpParams();
 
     if (filter) {
-      if (filter.search) params = params.set('search', filter.search);
+      if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
       if (filter.status !== undefined) params = params.set('status', filter.status.toString());
       if (filter.department !== undefined) params = params.set('department', filter.department.toString());
       if (filter.type) params = params.set('type', filter.type);
       if (filter.createdBy) params = params.set('createdBy', filter.createdBy);
-      if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom.toISOString());
-      if (filter.dateTo) params = params.set('dateTo', filter.dateTo.toISOString());
+      if (filter.fromDate) params = params.set('fromDate', filter.fromDate.toISOString());
+      if (filter.toDate) params = params.set('toDate', filter.toDate.toISOString());
       if (filter.page) params = params.set('page', filter.page.toString());
       if (filter.pageSize) params = params.set('pageSize', filter.pageSize.toString());
     }
@@ -247,11 +247,11 @@ export class ReportsService {
     let params = new HttpParams();
 
     if (filter) {
-      if (filter.search) params = params.set('search', filter.search);
+      if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
       if (filter.status !== undefined) params = params.set('status', filter.status.toString());
       if (filter.type) params = params.set('type', filter.type);
-      if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom.toISOString());
-      if (filter.dateTo) params = params.set('dateTo', filter.dateTo.toISOString());
+      if (filter.fromDate) params = params.set('fromDate', filter.fromDate.toISOString());
+      if (filter.toDate) params = params.set('toDate', filter.toDate.toISOString());
       if (filter.page) params = params.set('page', filter.page.toString());
       if (filter.pageSize) params = params.set('pageSize', filter.pageSize.toString());
     }
@@ -266,13 +266,13 @@ export class ReportsService {
     let params = new HttpParams();
 
     if (filter) {
-      if (filter.search) params = params.set('search', filter.search);
+      if (filter.searchTerm) params = params.set('searchTerm', filter.searchTerm);
       if (filter.status !== undefined) params = params.set('status', filter.status.toString());
       if (filter.department !== undefined) params = params.set('department', filter.department.toString());
       if (filter.type) params = params.set('type', filter.type);
       if (filter.createdBy) params = params.set('createdBy', filter.createdBy);
-      if (filter.dateFrom) params = params.set('dateFrom', filter.dateFrom.toISOString());
-      if (filter.dateTo) params = params.set('dateTo', filter.dateTo.toISOString());
+      if (filter.fromDate) params = params.set('fromDate', filter.fromDate.toISOString());
+      if (filter.toDate) params = params.set('toDate', filter.toDate.toISOString());
       if (filter.page) params = params.set('page', filter.page.toString());
       if (filter.pageSize) params = params.set('pageSize', filter.pageSize.toString());
     }

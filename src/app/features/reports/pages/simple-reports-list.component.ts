@@ -743,27 +743,39 @@ export class ReportsListComponent implements OnInit {
         return;
       }
 
-      // Call actual API to get reports
-      this.reportsService.getReports().subscribe({
+      // Build filter from form values
+      const formValues = this.filtersForm.value;
+      const filter: any = {};
+      
+      if (formValues.search) filter.searchTerm = formValues.search; // Match backend field name
+      if (formValues.status) filter.status = formValues.status;
+      if (formValues.department) filter.department = formValues.department;
+      if (formValues.dateFrom) filter.fromDate = new Date(formValues.dateFrom); // Match backend field name
+      if (formValues.dateTo) filter.toDate = new Date(formValues.dateTo); // Match backend field name
+
+      // Call actual API to get reports with filters
+      this.reportsService.getReports(filter).subscribe({
         next: (response) => {
           this.reports.set(response.reports || []);
-          },
+        },
         error: (error) => {
           this.reports.set([]);
         }
       });
     } catch (error) {
-      } finally {
+    } finally {
       this.isLoading.set(false);
     }
   }
 
   applyFilters(): void {
-    // Filtering is handled reactively through computed signal
-    }
+    // Reload reports with current filter values
+    this.loadReports();
+  }
 
   clearFilters(): void {
     this.filtersForm.reset();
+    this.loadReports();
   }
 
   applyPresetFilter(filterType: string): void {
@@ -771,15 +783,18 @@ export class ReportsListComponent implements OnInit {
       case 'my-reports':
         // Filter applied through computed signal based on user role
         this.filtersForm.reset();
+        this.loadReports();
         break;
       case 'pending-reviews':
         this.filtersForm.patchValue({ 
           status: [ReportStatus.ManagerReview, ReportStatus.GMReview] 
         });
+        this.loadReports();
         break;
       case 'team-reports':
         // Filter will be applied automatically based on user role
         this.filtersForm.reset();
+        this.loadReports();
         break;
       default:
         this.filtersForm.reset();
