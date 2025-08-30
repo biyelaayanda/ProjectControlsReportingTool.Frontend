@@ -1,1 +1,22 @@
-cd "c:\Users\biyelaa\source\repos\Practice\ProjectControlsReportingTool.API" && sqlcmd -S "(localdb)\MSSQLLocalDB" -d "ProjectControlsReportingTool" -i "Database\Scripts\UpdateExecutiveToGM.sql"
+PS C:\Users\biyel\source\repos\Side projects\ProjectControlsReportingTool.API> sqlcmd -S "(localdb)\MSSQLLocalDB" -d "ProjectControlsReportingToolDB" -i "Database\Scripts\UpdateExecutiveToGM.sql"
+
+Msg 111, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 76
+'CREATE/ALTER PROCEDURE' must be the first statement in a query batch.
+Msg 111, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 124
+'CREATE/ALTER PROCEDURE' must be the first statement in a query batch.
+Msg 156, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 152
+Incorrect syntax near the keyword 'END'.
+Msg 156, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 186
+Incorrect syntax near the keyword 'PROCEDURE'.
+Msg 137, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 211
+Must declare the scalar variable "@CanUpload".
+Msg 137, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 221
+Must declare the scalar variable "@CanUpload".
+Msg 137, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 229
+Must declare the scalar variable "@CanUpload".
+Msg 102, Level 15, State 1, Server DESKTOP-HPEEJV5\LOCALDB#D8B6F573, Procedure GetPendingApprovalsForGM, Line 290
+Incorrect syntax near 'If you need to rollback, run: ROLLBACK TRANSACTION GMUpdate;'.
+PS C:\Users\biyel\source\repos\Side projects\ProjectControlsReportingTool.API> sqlcmd -S "(localdb)\MSSQLLocalDB" -d "ProjectControlsReportingToolDB_Dev" -i "Database\Scripts\UpdateExecutiveToGM.sql"
+Sqlcmd: Error: Microsoft ODBC Driver 17 for SQL Server : Named Pipes Provider: Timeout error [258]. .
+Sqlcmd: Error: Microsoft ODBC Driver 17 for SQL Server : Login timeout expired.
+Sqlcmd: Error: Microsoft ODBC Driver 17 for SQL Server : Unable to complete login process due to delay in login response.
