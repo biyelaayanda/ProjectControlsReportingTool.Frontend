@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { Observable, BehaviorSubject, firstValueFrom } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface NotificationDto {
@@ -49,12 +49,11 @@ export class NotificationService {
   stats = signal<NotificationStatsDto | null>(null);
   
   // For real-time updates
-  private notificationsSubject = new BehaviorSubject<NotificationDto[]>([]);
+  private readonly notificationsSubject = new BehaviorSubject<NotificationDto[]>([]);
   public notifications$ = this.notificationsSubject.asObservable();
 
-  constructor(private http: HttpClient) {
-    this.loadNotifications();
-    this.loadStats();
+  constructor(private readonly http: HttpClient) {
+    // Initialize with empty data - components will call loadNotifications() when needed
   }
 
   // Get user notifications with filtering
@@ -65,33 +64,12 @@ export class NotificationService {
     pageSize: number;
   }> {
     const params = filter ? this.buildQueryParams(filter) : {};
-    return this.http.get<any>(`${this.apiUrl}`, { params }).pipe(
-      catchError((error) => {
-        console.warn('Backend not available, using mock data:', error);
-        return of({
-          notifications: this.getMockNotifications(),
-          totalCount: 3,
-          page: 1,
-          pageSize: 10
-        });
-      })
-    );
+    return this.http.get<any>(`${this.apiUrl}`, { params });
   }
 
   // Get notification statistics
   getNotificationStats(): Observable<NotificationStatsDto> {
-    return this.http.get<NotificationStatsDto>(`${this.apiUrl}/stats`).pipe(
-      catchError((error) => {
-        console.warn('Backend not available, using mock stats:', error);
-        return of({
-          totalNotifications: 3,
-          unreadNotifications: 2,
-          readNotifications: 1,
-          notificationsByType: { Info: 1, Success: 2 },
-          notificationsByPriority: { Normal: 2, Low: 1 }
-        });
-      })
-    );
+    return this.http.get<NotificationStatsDto>(`${this.apiUrl}/stats`);
   }
 
   // Mark notification as read
@@ -129,8 +107,8 @@ export class NotificationService {
   // Load notifications and update signals
   async loadNotifications(filter?: NotificationFilterDto): Promise<void> {
     try {
-      const response = await this.getNotifications(filter).toPromise();
-      if (response && response.notifications) {
+      const response = await firstValueFrom(this.getNotifications(filter));
+      if (response?.notifications) {
         this.notifications.set(response.notifications);
         this.notificationsSubject.next(response.notifications);
         this.updateUnreadCount(response.notifications);
@@ -152,7 +130,7 @@ export class NotificationService {
   // Load statistics and update signal
   async loadStats(): Promise<void> {
     try {
-      const stats = await this.getNotificationStats().toPromise();
+      const stats = await firstValueFrom(this.getNotificationStats());
       if (stats) {
         this.stats.set(stats);
         this.unreadCount.set(stats.unreadNotifications);
@@ -222,7 +200,7 @@ export class NotificationService {
 
     const notificationIds = unreadNotifications.map(n => n.id);
     try {
-      await this.markMultipleAsRead(notificationIds).toPromise();
+      await firstValueFrom(this.markMultipleAsRead(notificationIds));
       await this.loadNotifications(); // Refresh
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -240,22 +218,21 @@ export class NotificationService {
   }
 
   // Mark notification as unread
-  markAsUnread(id: string): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}/unread`, {}).pipe(
+  markAsUnread(notificationId: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${notificationId}/unread`, {}).pipe(
       tap(() => {
-        const notification = this.notifications().find(n => n.id === id);
-        if (notification && notification.isRead) {
+        const notification = this.notifications().find(n => n.id === notificationId);
+        if (notification?.isRead) {
           this.updateNotification({ ...notification, isRead: false });
         }
-      }),
-      catchError(this.handleError<void>('markAsUnread'))
+      })
     );
   }
 
   // Clear all notifications
   async clearAllNotifications(): Promise<void> {
     try {
-      await this.http.delete<void>(`${this.apiUrl}/clear-all`).toPromise();
+      await firstValueFrom(this.http.delete<void>(`${this.apiUrl}/clear-all`));
       this.notifications.set([]);
       this.notificationsSubject.next([]);
       this.unreadCount.set(0);
@@ -263,50 +240,5 @@ export class NotificationService {
       console.error('Error clearing all notifications:', error);
       throw error;
     }
-  }
-
-  // Mock notifications for when backend is not available
-  private getMockNotifications(): NotificationDto[] {
-    return [
-      {
-        id: 'mock-1',
-        title: '🔧 Development Mode',
-        message: 'Backend API is not running. Using mock notifications for testing.',
-        type: 'Info',
-        priority: 'Normal',
-        isRead: false,
-        createdAt: new Date().toISOString(),
-        userId: 'mock-user',
-        actionUrl: '/notifications/preferences'
-      },
-      {
-        id: 'mock-2',
-        title: '🎉 Welcome!',
-        message: 'Welcome to the Project Controls Reporting Tool notification system.',
-        type: 'Success',
-        priority: 'Normal',
-        isRead: false,
-        createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-        userId: 'mock-user'
-      },
-      {
-        id: 'mock-3',
-        title: '⚙️ System Ready',
-        message: 'All notification features are working in development mode.',
-        type: 'Success',
-        priority: 'Low',
-        isRead: true,
-        createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-        userId: 'mock-user'
-      }
-    ];
-  }
-
-  // Error handler
-  private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
-      console.error(`${operation} failed:`, error);
-      return of(result as T);
-    };
   }
 }
