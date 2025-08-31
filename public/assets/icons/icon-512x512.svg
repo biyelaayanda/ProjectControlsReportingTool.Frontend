@@ -1,0 +1,7 @@
+<!-- SVG placeholder icon for PWA - 512x512 -->
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#1976d2"/>
+  <text x="256" y="220" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="72" font-family="Arial">PROJECT</text>
+  <text x="256" y="292" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="48" font-family="Arial">CONTROLS</text>
+  <text x="256" y="356" text-anchor="middle" dominant-baseline="middle" fill="white" font-size="36" font-family="Arial">REPORTING</text>
+</svg>
