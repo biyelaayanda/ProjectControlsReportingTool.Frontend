@@ -68,7 +68,7 @@ import { RealTimeService } from '../../core/services/real-time.service';
         <mat-divider></mat-divider>
 
         <!-- No notifications -->
-        <div class="no-notifications" *ngIf="notifications().length === 0" (click)="$event.stopPropagation()">
+        <div class="no-notifications" *ngIf="(notifications() || []).length === 0" (click)="$event.stopPropagation()">
           <mat-icon>notifications_none</mat-icon>
           <p>No notifications</p>
           <button 
@@ -84,7 +84,7 @@ import { RealTimeService } from '../../core/services/real-time.service';
         </div>
 
         <!-- Notifications List -->
-        <div class="notifications-list" *ngIf="notifications().length > 0">
+        <div class="notifications-list" *ngIf="(notifications() || []).length > 0">
           <div
             *ngFor="let notification of recentNotifications(); trackBy: trackByNotificationId"
             class="notification-item"

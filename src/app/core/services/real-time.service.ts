@@ -76,9 +76,18 @@ export class RealTimeService {
       await this.joinUserGroup();
       
     } catch (error) {
-      console.error('SignalR Connection failed:', error);
+      console.warn('SignalR Connection failed (backend may not be running):', error);
       this.updateConnectionStatus(false);
       this.isConnecting.set(false);
+      
+      // Only retry if it's not a 404 (backend not available)
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('404')) {
+        // Retry connection after 5 seconds
+        setTimeout(() => {
+          this.startConnection();
+        }, 5000);
+      }
     }
   }
 

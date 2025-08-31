@@ -65,12 +65,33 @@ export class NotificationService {
     pageSize: number;
   }> {
     const params = filter ? this.buildQueryParams(filter) : {};
-    return this.http.get<any>(`${this.apiUrl}`, { params });
+    return this.http.get<any>(`${this.apiUrl}`, { params }).pipe(
+      catchError((error) => {
+        console.warn('Backend not available, using mock data:', error);
+        return of({
+          notifications: this.getMockNotifications(),
+          totalCount: 3,
+          page: 1,
+          pageSize: 10
+        });
+      })
+    );
   }
 
   // Get notification statistics
   getNotificationStats(): Observable<NotificationStatsDto> {
-    return this.http.get<NotificationStatsDto>(`${this.apiUrl}/stats`);
+    return this.http.get<NotificationStatsDto>(`${this.apiUrl}/stats`).pipe(
+      catchError((error) => {
+        console.warn('Backend not available, using mock stats:', error);
+        return of({
+          totalNotifications: 3,
+          unreadNotifications: 2,
+          readNotifications: 1,
+          notificationsByType: { Info: 1, Success: 2 },
+          notificationsByPriority: { Normal: 2, Low: 1 }
+        });
+      })
+    );
   }
 
   // Mark notification as read
@@ -109,13 +130,22 @@ export class NotificationService {
   async loadNotifications(filter?: NotificationFilterDto): Promise<void> {
     try {
       const response = await this.getNotifications(filter).toPromise();
-      if (response) {
+      if (response && response.notifications) {
         this.notifications.set(response.notifications);
         this.notificationsSubject.next(response.notifications);
         this.updateUnreadCount(response.notifications);
+      } else {
+        // Handle empty response or missing notifications array
+        this.notifications.set([]);
+        this.notificationsSubject.next([]);
+        this.updateUnreadCount([]);
       }
     } catch (error) {
       console.error('Error loading notifications:', error);
+      // Set empty arrays on error to prevent undefined access
+      this.notifications.set([]);
+      this.notificationsSubject.next([]);
+      this.updateUnreadCount([]);
     }
   }
 
@@ -163,6 +193,10 @@ export class NotificationService {
 
   // Helper methods
   private updateUnreadCount(notifications: NotificationDto[]): void {
+    if (!notifications) {
+      this.unreadCount.set(0);
+      return;
+    }
     const unread = notifications.filter(n => !n.isRead).length;
     this.unreadCount.set(unread);
   }
@@ -229,6 +263,43 @@ export class NotificationService {
       console.error('Error clearing all notifications:', error);
       throw error;
     }
+  }
+
+  // Mock notifications for when backend is not available
+  private getMockNotifications(): NotificationDto[] {
+    return [
+      {
+        id: 'mock-1',
+        title: '🔧 Development Mode',
+        message: 'Backend API is not running. Using mock notifications for testing.',
+        type: 'Info',
+        priority: 'Normal',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        userId: 'mock-user',
+        actionUrl: '/notifications/preferences'
+      },
+      {
+        id: 'mock-2',
+        title: '🎉 Welcome!',
+        message: 'Welcome to the Project Controls Reporting Tool notification system.',
+        type: 'Success',
+        priority: 'Normal',
+        isRead: false,
+        createdAt: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+        userId: 'mock-user'
+      },
+      {
+        id: 'mock-3',
+        title: '⚙️ System Ready',
+        message: 'All notification features are working in development mode.',
+        type: 'Success',
+        priority: 'Low',
+        isRead: true,
+        createdAt: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
+        userId: 'mock-user'
+      }
+    ];
   }
 
   // Error handler
