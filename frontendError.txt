@@ -1,42 +1,36 @@
+Browser notifications available - configure in notification preferences notification-center.component.ts:442:15
 XHRPOST
 http://localhost:5039/api/notificationHub/negotiate?negotiateVersion=1
 [HTTP/1.1 404 Not Found 4ms]
 
-Browser notifications available - configure in notification preferences notification-center.component.ts:442:15
+ERROR Error: NG01203: No value accessor for form control unspecified name attribute. Find more at https://angular.dev/errors/NG01203
+    Angular 4
+root_effect_scheduler.mjs:3583:23
 Service Worker registered successfully: 
 ServiceWorkerRegistration { installing: ServiceWorker, waiting: null, active: null, navigationPreload: NavigationPreloadManager, scope: "http://localhost:4200/", updateViaCache: "imports", onupdatefound: null, pushManager: PushManager, cookies: CookieStoreManager }
 pwa.service.ts:17:17
-GET
-http://localhost:4200/assets/icons/icon-192x192.png
-[HTTP/1.1 404 Not Found 0ms]
-
+ERROR Error: mat-form-field must contain a MatFormFieldControl.
+    Angular 4
+root_effect_scheduler.mjs:3583:23
+ERROR Error: mat-form-field must contain a MatFormFieldControl.
+    Angular 4
+root_effect_scheduler.mjs:3583:23
 PWA Service Worker registered: 
 ServiceWorkerRegistration { installing: ServiceWorker, waiting: null, active: null, navigationPreload: NavigationPreloadManager, scope: "http://localhost:4200/", updateViaCache: "imports", onupdatefound: null, pushManager: PushManager, cookies: CookieStoreManager }
 main.ts:11:19
 New service worker version available pwa.service.ts:21:19
-Error loading notifications: TypeError: can't access property "filter", notifications is undefined
-    updateUnreadCount notification.service.ts:166
-    loadNotifications notification.service.ts:115
-    fulfilled chunk-ZUQUEHV7.js:28
-    Angular 3
-notification.service.ts:118:15
-Error loading notifications: TypeError: can't access property "filter", notifications is undefined
-    updateUnreadCount notification.service.ts:166
-    loadNotifications notification.service.ts:115
-    fulfilled chunk-ZUQUEHV7.js:28
-    Angular 3
-notification.service.ts:118:15
-ERROR TypeError: can't access property "length", ctx.notifications() is undefined
-    NotificationCenterComponent_Template notification-center.component.ts:71
-    Angular 3
+ERROR Error: mat-form-field must contain a MatFormFieldControl.
+    Angular 4
 root_effect_scheduler.mjs:3583:23
-[2025-08-31T14:22:30.848Z] Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection. Utils.js:141:30
-[2025-08-31T14:22:30.850Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection. Utils.js:141:30
-SignalR Connection failed: Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection.
+ERROR Error: mat-form-field must contain a MatFormFieldControl.
+    Angular 4
+root_effect_scheduler.mjs:3583:23
+[2025-08-31T14:32:05.558Z] Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection. Utils.js:141:30
+[2025-08-31T14:32:05.558Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection. Utils.js:141:30
+SignalR Connection failed (backend may not be running): Error: Failed to complete negotiation with the server: Error: Not Found: Status code '404' Either this is not a SignalR endpoint or there is a proxy blocking the connection.
     FailedToNegotiateWithServerError Errors.js:110
     _getNegotiationResponse HttpConnection.js:256
     Angular 2
 real-time.service.ts:79:15
-ERROR TypeError: can't access property "length", ctx.notifications() is undefined
-    NotificationCenterComponent_Template notification-center.component.ts:71
-    Angular 3
+ERROR Error: mat-form-field must contain a MatFormFieldControl.
+    Angular 4
