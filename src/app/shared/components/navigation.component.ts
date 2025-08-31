@@ -126,6 +126,10 @@ interface MenuItem {
                 <mat-icon>person</mat-icon>
                 <span>Profile</span>
               </button>
+              <button mat-menu-item routerLink="/notifications/preferences">
+                <mat-icon>notifications_active</mat-icon>
+                <span>Notification Preferences</span>
+              </button>
               <button mat-menu-item routerLink="/settings">
                 <mat-icon>settings</mat-icon>
                 <span>Settings</span>

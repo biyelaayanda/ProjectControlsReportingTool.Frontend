@@ -5,8 +5,9 @@ import { ReportsListComponent } from './features/reports/pages/simple-reports-li
 import { ReportDetailsComponent } from './features/reports/components/report-details.component';
 import { ProfileComponent } from './features/profile/profile.component';
 import { NotificationsComponent } from './features/notifications/pages/notifications.component';
+import { NotificationPreferencesComponent } from './features/notifications/components/notification-preferences.component';
 import { NavigationComponent } from './shared/components/navigation.component';
-import { authGuard, roleGuard } from './core/guards/auth.guard';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Public routes
@@ -40,6 +41,10 @@ export const routes: Routes = [
       {
         path: 'notifications',
         component: NotificationsComponent
+      },
+      {
+        path: 'notifications/preferences',
+        component: NotificationPreferencesComponent
       },
       {
         path: 'profile',

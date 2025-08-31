@@ -213,21 +213,60 @@ export class ReportsService {
   submitReport(id: string, comments?: string): Observable<Report> {
     const submitDto = { comments: comments || '' };
     const url = `${this.apiUrl}/${id}/submit`;
-    return this.http.post<Report>(url, submitDto);
+    return this.http.post<Report>(url, submitDto).pipe(
+      tap(async (report) => {
+        // Trigger workflow notification for submission
+        try {
+          const workflowService = await import('./workflow-notification.service').then(m => m.WorkflowNotificationService);
+          const service = inject(workflowService);
+          await service.triggerReportSubmission(report.id, report.title);
+        } catch (error) {
+          console.warn('Could not trigger workflow notification:', error);
+        }
+      })
+    );
   }
 
   /**
    * Approve a report (for managers/GMs)
    */
   approveReport(id: string, comments?: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${id}/approve`, { comments });
+    return this.http.post<any>(`${this.apiUrl}/${id}/approve`, { comments }).pipe(
+      tap(async (result) => {
+        // Trigger workflow notification for approval - need to get report details first
+        try {
+          const report = await this.getReport(id).toPromise();
+          if (report) {
+            const workflowService = await import('./workflow-notification.service').then(m => m.WorkflowNotificationService);
+            const service = inject(workflowService);
+            await service.triggerReportApproved(report.id, report.title, report.creatorName, 'current-user');
+          }
+        } catch (error) {
+          console.warn('Could not trigger workflow notification:', error);
+        }
+      })
+    );
   }
 
   /**
    * Reject a report (for managers/GMs)
    */
   rejectReport(id: string, reason: string): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/${id}/reject`, { reason });
+    return this.http.post<any>(`${this.apiUrl}/${id}/reject`, { reason }).pipe(
+      tap(async (result) => {
+        // Trigger workflow notification for rejection - need to get report details first
+        try {
+          const report = await this.getReport(id).toPromise();
+          if (report) {
+            const workflowService = await import('./workflow-notification.service').then(m => m.WorkflowNotificationService);
+            const service = inject(workflowService);
+            await service.triggerReportRejected(report.id, report.title, report.creatorName, 'current-user', reason);
+          }
+        } catch (error) {
+          console.warn('Could not trigger workflow notification:', error);
+        }
+      })
+    );
   }
 
   /**
