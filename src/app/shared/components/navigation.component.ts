@@ -9,6 +9,7 @@ import { MatSidenavModule, MatSidenav } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -38,6 +39,7 @@ interface MenuItem {
     MatListModule,
     MatDividerModule,
     MatBadgeModule,
+    MatTooltipModule,
     NotificationCenterComponent
   ],
   template: `
@@ -111,7 +113,12 @@ interface MenuItem {
             <app-notification-center></app-notification-center>
             
             <!-- User Menu -->
-            <button mat-icon-button [matMenuTriggerFor]="userMenu">
+            <button 
+              mat-icon-button 
+              [matMenuTriggerFor]="userMenu"
+              (click)="onUserMenuClick($event)"
+              matTooltip="User Menu"
+            >
               <mat-icon>account_circle</mat-icon>
             </button>
             
@@ -516,6 +523,12 @@ export class NavigationComponent {
       default:
         return '';
     }
+  }
+
+  onUserMenuClick(event: Event): void {
+    console.log('User menu clicked', event);
+    // The mat-menu will handle opening automatically
+    // This is just for debugging
   }
 
   logout(): void {

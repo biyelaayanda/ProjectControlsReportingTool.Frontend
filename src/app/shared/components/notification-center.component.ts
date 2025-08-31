@@ -71,6 +71,16 @@ import { RealTimeService } from '../../core/services/real-time.service';
         <div class="no-notifications" *ngIf="notifications().length === 0" (click)="$event.stopPropagation()">
           <mat-icon>notifications_none</mat-icon>
           <p>No notifications</p>
+          <button 
+            mat-button 
+            color="primary" 
+            *ngIf="!hasNotificationPermission()" 
+            (click)="requestNotificationPermission()"
+            class="enable-notifications-btn"
+          >
+            <mat-icon>notifications_active</mat-icon>
+            Enable Browser Notifications
+          </button>
         </div>
 
         <!-- Notifications List -->
@@ -206,6 +216,10 @@ import { RealTimeService } from '../../core/services/real-time.service';
       width: 48px;
       opacity: 0.5;
       margin-bottom: 8px;
+    }
+
+    .enable-notifications-btn {
+      margin-top: 16px;
     }
 
     .notifications-list {
@@ -422,17 +436,29 @@ export class NotificationCenterComponent implements OnInit {
     // Load initial notifications
     this.notificationService.loadNotifications();
     
-    // Request browser notification permission
-    this.requestNotificationPermission();
+    // Only request permission if user hasn't been asked before
+    if (Notification.permission === 'default') {
+      // Don't auto-request permission, let user decide from settings
+      console.log('Browser notifications available - configure in notification preferences');
+    }
   }
 
   async requestNotificationPermission(): Promise<void> {
+    // Only request permission if explicitly called (e.g., from settings)
     const granted = await this.realTimeService.requestNotificationPermission();
     if (!granted) {
-      this.snackBar.open('Enable browser notifications for real-time alerts', 'Close', {
-        duration: 5000
+      this.snackBar.open('Browser notifications are disabled. Enable them in your browser settings for real-time alerts.', 'Close', {
+        duration: 3000
+      });
+    } else {
+      this.snackBar.open('Browser notifications enabled successfully!', 'Close', {
+        duration: 2000
       });
     }
+  }
+
+  hasNotificationPermission(): boolean {
+    return Notification.permission === 'granted';
   }
 
   async markAsRead(notification: NotificationDto, event: Event): Promise<void> {
