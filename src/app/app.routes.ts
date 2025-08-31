@@ -10,7 +10,8 @@ import { NotificationManagementComponent } from './features/notifications/pages/
 import { UserManagementComponent } from './features/users/user-management/user-management.component';
 import { UserListComponent } from './features/users/user-list/user-list.component';
 import { NavigationComponent } from './shared/components/navigation.component';
-import { authGuard } from './core/guards/auth.guard';
+import { SuperAdminDashboardComponent } from './features/super-admin/super-admin-dashboard.component';
+import { authGuard, superAdminGuard, noBusinessAccessGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   // Public routes
@@ -23,11 +24,32 @@ export const routes: Routes = [
     component: RegisterComponent
   },
   
-  // Protected routes with navigation
+  // SuperAdmin routes (separate from main navigation)
+  {
+    path: 'super-admin',
+    canActivate: [authGuard, superAdminGuard],
+    children: [
+      {
+        path: '',
+        component: SuperAdminDashboardComponent
+      },
+      {
+        path: 'dashboard',
+        component: SuperAdminDashboardComponent
+      }
+      // TODO: Add more SuperAdmin routes as we implement them
+      // { path: 'users', component: SuperAdminUserManagementComponent },
+      // { path: 'users/create', component: UserCreationComponent },
+      // { path: 'audit', component: AuditReportsComponent },
+      // { path: 'system', component: SystemAdministrationComponent }
+    ]
+  },
+  
+  // Protected routes with navigation (blocked for SuperAdmin)
   {
     path: '',
     component: NavigationComponent,
-    canActivate: [authGuard],
+    canActivate: [authGuard, noBusinessAccessGuard],
     children: [
       {
         path: 'reports',
