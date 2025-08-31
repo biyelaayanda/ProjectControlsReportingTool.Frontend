@@ -6,6 +6,9 @@ import { ReportDetailsComponent } from './features/reports/components/report-det
 import { ProfileComponent } from './features/profile/profile.component';
 import { NotificationsComponent } from './features/notifications/pages/notifications.component';
 import { NotificationPreferencesComponent } from './features/notifications/components/notification-preferences.component';
+import { NotificationManagementComponent } from './features/notifications/pages/notification-management.component';
+import { UserManagementComponent } from './features/users/user-management/user-management.component';
+import { UserListComponent } from './features/users/user-list/user-list.component';
 import { NavigationComponent } from './shared/components/navigation.component';
 import { authGuard } from './core/guards/auth.guard';
 
@@ -45,6 +48,18 @@ export const routes: Routes = [
       {
         path: 'notifications/preferences',
         component: NotificationPreferencesComponent
+      },
+      {
+        path: 'notifications/manage',
+        component: NotificationManagementComponent
+      },
+      {
+        path: 'users/manage',
+        component: UserManagementComponent
+      },
+      {
+        path: 'users/all',
+        component: UserListComponent
       },
       {
         path: 'profile',

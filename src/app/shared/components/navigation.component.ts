@@ -422,7 +422,25 @@ export class NavigationComponent {
     {
       label: 'Notifications',
       icon: 'notifications',
-      route: '/notifications'
+      route: '/notifications',
+      children: [
+        {
+          label: 'My Notifications',
+          icon: 'notifications',
+          route: '/notifications'
+        },
+        {
+          label: 'Preferences',
+          icon: 'settings',
+          route: '/notifications/preferences'
+        },
+        {
+          label: 'Email Management',
+          icon: 'admin_panel_settings',
+          route: '/notifications/manage',
+          roles: [UserRole.GM]
+        }
+      ]
     },
     {
       label: 'Analytics',
