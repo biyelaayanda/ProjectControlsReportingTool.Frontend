@@ -4,6 +4,7 @@ import { RegisterComponent } from './features/auth/pages/register.component';
 import { ReportsListComponent } from './features/reports/pages/simple-reports-list.component';
 import { ReportDetailsComponent } from './features/reports/components/report-details.component';
 import { ProfileComponent } from './features/profile/profile.component';
+import { NotificationsComponent } from './features/notifications/pages/notifications.component';
 import { NavigationComponent } from './shared/components/navigation.component';
 import { authGuard, roleGuard } from './core/guards/auth.guard';
 
@@ -35,6 +36,10 @@ export const routes: Routes = [
       {
         path: 'reports/:id',
         component: ReportDetailsComponent
+      },
+      {
+        path: 'notifications',
+        component: NotificationsComponent
       },
       {
         path: 'profile',

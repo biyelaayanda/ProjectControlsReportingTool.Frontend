@@ -13,6 +13,7 @@ import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 import { AuthService } from '../../core/services/auth.service';
 import { UserRole, Department } from '../../core/models/enums';
+import { NotificationCenterComponent } from './notification-center.component';
 
 interface MenuItem {
   label: string;
@@ -36,7 +37,8 @@ interface MenuItem {
     MatSidenavModule,
     MatListModule,
     MatDividerModule,
-    MatBadgeModule
+    MatBadgeModule,
+    NotificationCenterComponent
   ],
   template: `
     <div class="app-container">
@@ -106,9 +108,7 @@ interface MenuItem {
             <span class="toolbar-spacer"></span>
             
             <!-- Notifications -->
-            <button mat-icon-button>
-              <mat-icon matBadge="3" matBadgeColor="accent" aria-hidden="false">notifications</mat-icon>
-            </button>
+            <app-notification-center></app-notification-center>
             
             <!-- User Menu -->
             <button mat-icon-button [matMenuTriggerFor]="userMenu">
@@ -363,9 +363,9 @@ interface MenuItem {
 export class NavigationComponent {
   @ViewChild('drawer') drawer!: MatSidenav;
   
-  private breakpointObserver = inject(BreakpointObserver);
-  private authService = inject(AuthService);
-  private router = inject(Router);
+  private readonly breakpointObserver = inject(BreakpointObserver);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   currentUser = computed(() => this.authService.currentUser());
   
@@ -373,7 +373,7 @@ export class NavigationComponent {
     this.breakpointObserver.isMatched([Breakpoints.Handset, Breakpoints.Small, '(max-width: 768px)'])
   );
 
-  private menuItems: MenuItem[] = [
+  private readonly menuItems: MenuItem[] = [
     {
       label: 'Dashboard',
       icon: 'dashboard',
@@ -407,6 +407,11 @@ export class NavigationComponent {
           roles: [UserRole.GM]
         }
       ]
+    },
+    {
+      label: 'Notifications',
+      icon: 'notifications',
+      route: '/notifications'
     },
     {
       label: 'Analytics',
