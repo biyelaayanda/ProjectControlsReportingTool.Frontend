@@ -435,6 +435,11 @@ export class NavigationComponent {
           route: '/notifications/preferences'
         },
         {
+          label: 'Setup & Configuration',
+          icon: 'build',
+          route: '/notifications/setup'
+        },
+        {
           label: 'Email Management',
           icon: 'admin_panel_settings',
           route: '/notifications/manage',

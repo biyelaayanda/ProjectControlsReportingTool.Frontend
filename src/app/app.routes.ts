@@ -50,6 +50,10 @@ export const routes: Routes = [
         component: NotificationPreferencesComponent
       },
       {
+        path: 'notifications/setup',
+        component: NotificationPreferencesComponent // Will use tabs to show setup
+      },
+      {
         path: 'notifications/manage',
         component: NotificationManagementComponent
       },
